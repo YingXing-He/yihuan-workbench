@@ -1144,7 +1144,7 @@ function renderDailyInner(c) {
   }
   if (c.bili && c.bili.length) {
     h += `<div class="daily-block"><div class="daily-h">📺 B站推荐（真实视频）</div>` +
-      c.bili.map(x => `<a class="daily-link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.up ? `<span class="daily-sub">${esc(x.up)}</span>` : ''}`).join('') + `</div>`;
+      c.bili.map(x => `<a class="daily-link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.tag ? `<span class="daily-sub">${esc(x.tag)}</span>` : ''}`).join('') + `</div>`;
   }
   if (c.podcasts && c.podcasts.length) {
     h += `<div class="daily-block"><div class="daily-h">🎧 播客推荐</div>` +
