@@ -2970,7 +2970,7 @@ function renderSettings() {
     <div class="settings-section">
       <h3>🤖 AI 模型配置</h3>
       <div class="card">
-        <div class="settings-desc" style="margin-bottom:10px">可接入<b>多个</b>大模型（DeepSeek / OpenAI / 智谱 / 本地 Ollama 等），任选一个设为默认。密钥只存在你浏览器本地（localStorage），不会上传到任何服务器，也不会写进代码。<b>所有 AI 功能（AI 帮手、AI 前沿动态、每日复盘 AI 分析等）都从这里读取默认模型。</b></div>
+        <div class="settings-desc" style="margin-bottom:10px">可接入<b>多个</b>大模型（DeepSeek / OpenAI / 智谱 / 本地 Ollama 等），任选一个设为默认。密钥只存在你浏览器本地（localStorage），<b>不会写进网站代码</b>，公开网页也不会收集它。<b>例外</b>：如果你开启了「☁️ 云同步」，密钥会作为你的数据一起备份到你自己的私有同步空间（仅你能访问）。所有 AI 功能都从这里读取默认模型。</div>
         <div id="aiProvList">
           ${aiProv.length ? aiProv.map(p => `<div class="ai-prov-row">
             <span class="ai-prov-radio ${p.id===aiDefault?'on':''}" data-act="aiProvDefault" data-id="${p.id}" title="设为默认">${p.id===aiDefault?'★ 默认':'○ 设为默认'}</span>
