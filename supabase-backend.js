@@ -91,7 +91,20 @@ window.SupaBackend = (function () {
     return (data && data.data) ? data.data : null;
   }
 
-  return { ensure, reset, signUp, signIn, signOut, getUser, push, pull };
+  // 读取「每日自动更新」公共内容（无需登录，公开只读）
+  async function readDaily(dateStr) {
+    try {
+      const sb = ensure();
+      const { data, error } = await sb.from('daily_content')
+        .select('content').eq('id', dateStr).maybeSingle();
+      if (error) throw error;
+      return (data && data.content) ? data.content : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  return { ensure, reset, signUp, signIn, signOut, getUser, push, pull, readDaily };
 })();
 
 /* =========================================================================
@@ -109,4 +122,19 @@ window.SupaBackend = (function () {
  * create policy "own_read"  on public.sync_data for select using (auth.uid() = user_id);
  * create policy "own_insert" on public.sync_data for insert with check (auth.uid() = user_id);
  * create policy "own_update" on public.sync_data for update using (auth.uid() = user_id);
+ *
+ * =========================================================================
+ * 每日自动更新内容表（supabase-backend.js 的 readDaily() 会读它）
+ * -------------------------------------------------------------------------
+ * daily_content 存「公共资讯」（热点/播客/读书/AI视频/每日计划），任何人可读，
+ * 只有 service_role 可写（写操作由你本地 daily_update.py 脚本执行，绝不放前端）。
+ *
+ * create table if not exists public.daily_content (
+ *   id         text primary key,            -- 日期，格式 'YYYY-MM-DD'
+ *   content    jsonb not null,              -- 当天 AI 生成的内容（见 daily_update.py 生成的结构）
+ *   updated_at timestamptz default now()
+ * );
+ * alter table public.daily_content enable row level security;
+ * -- 公开只读（匿名 anon key 即可读）；不建写 policy → 前端 anon 无法写入
+ * create policy "public_read" on public.daily_content for select using (true);
  * ========================================================================= */
