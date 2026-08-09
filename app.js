@@ -1129,6 +1129,26 @@ const DAILY_SEED = {
   ]
 };
 
+// 尝试用 App scheme 唤起本地应用，失败则打开网页 fallback
+window.tryOpenApp = function (scheme, fallbackUrl) {
+  var iframe = document.createElement('iframe');
+  iframe.style.cssText = 'width:0;height:0;border:0;position:absolute;top:-9999px;left:-9999px;';
+  iframe.src = scheme;
+  document.body.appendChild(iframe);
+  var t0 = Date.now();
+  function cleanup() { if (iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe); }
+  setTimeout(function () {
+    cleanup();
+    // 如果 App 没有唤起，页面仍然在当前页且耗时很短，则 fallback 到网页
+    if (Date.now() - t0 < 900) window.open(fallbackUrl, '_blank');
+  }, 500);
+};
+
+function dailyTagClass(tag) {
+  const map = { 'AI前沿':'ai', '财经':'finance', '认知':'mind', '人文':'human', '时政':'poli', '雅思':'ielts' };
+  return map[tag] || '';
+}
+
 function renderDailyInner(c) {
   let h = '';
   if (c.plan) {
@@ -1136,21 +1156,25 @@ function renderDailyInner(c) {
   }
   if (c.ai_news && c.ai_news.length) {
     h += `<div class="daily-block"><div class="daily-h">📰 AI / 科技前沿（真实新闻）</div>` +
-      c.ai_news.map(x => `<a class="daily-link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.summary ? `<span class="daily-sub">${esc(x.summary)}</span>` : ''}`).join('') + `</div>`;
+      c.ai_news.map(x => `<div class="daily-row"><a class="daily-link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">${esc(x.title)}</a></div>${x.summary ? `<span class="daily-sub">${esc(x.summary)}</span>` : ''}`).join('') + `</div>`;
   }
   if (c.hot && c.hot.length) {
     h += `<div class="daily-block"><div class="daily-h">🔥 实时热点（点击跳转平台搜索）</div>` +
-      c.hot.map(x => `<a class="daily-link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.heat ? `<span class="daily-sub">${esc(x.heat)}</span>` : ''}`).join('') + `</div>`;
+      c.hot.map(x => `<div class="daily-row"><a class="daily-link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.heat ? `<span class="daily-heat">${esc(x.heat)}</span>` : ''}</div>`).join('') + `</div>`;
   }
   if (c.bili && c.bili.length) {
     const tagOrder = { 'AI前沿': 1, '财经': 2, '认知': 3, '人文': 4, '时政': 5, '雅思': 6 };
     const sortedBili = [...c.bili].sort((a, b) => (tagOrder[a.tag] || 9) - (tagOrder[b.tag] || 9));
     h += `<div class="daily-block"><div class="daily-h">📺 B站推荐（真实视频）</div>` +
-      sortedBili.map(x => `<a class="daily-link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.tag ? `<span class="daily-sub">${esc(x.tag)}</span>` : ''}`).join('') + `</div>`;
+      sortedBili.map(x => `<div class="daily-row"><a class="daily-link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.tag ? `<span class="daily-tag tag-${dailyTagClass(x.tag)}">${esc(x.tag)}</span>` : ''}</div>`).join('') + `</div>`;
   }
   if (c.podcasts && c.podcasts.length) {
     h += `<div class="daily-block"><div class="daily-h">🎧 播客推荐</div>` +
-      c.podcasts.map(x => `<div class="daily-item"><b>${esc(x.title)}</b>${x.note ? `<span>${esc(x.note)}</span>` : ''}${x.url ? `<a class="daily-link" href="${esc(x.url)}" target="_blank" rel="noopener">▶ 收听</a>` : ''}</div>`).join('') + `</div>`;
+      c.podcasts.map(x => {
+        const webUrl = esc(x.url || ('https://www.ximalaya.com/search?q=' + encodeURIComponent(x.title)));
+        const scheme = 'ximalaya://search?keyword=' + encodeURIComponent(x.title);
+        return `<div class="daily-item"><div class="daily-row"><b>${esc(x.title)}</b></div>${x.note ? `<span>${esc(x.note)}</span>` : ''}<a class="daily-link" href="#" onclick="window.tryOpenApp('${scheme}', '${webUrl}'); return false;">▶ 用喜马拉雅 App 收听</a></div>`;
+      }).join('') + `</div>`;
   }
   if (c.books && c.books.length) {
     h += `<div class="daily-block"><div class="daily-h">📚 读书推荐</div>` +

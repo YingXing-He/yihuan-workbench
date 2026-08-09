@@ -372,7 +372,7 @@
   };
 
   /* ===================== 播客精选 ===================== */
-  // 每日播客推荐池（跳转 B站 聚合内容，链接稳定可用）
+  // 每日播客推荐池（优先唤起喜马拉雅 App，失败 fallback 到网页搜索）
   const PODCAST_RECS = [
     { title: '英语播客精听合集（磨耳朵）', kw: '英语播客 精听', desc: '适合雅思听力与口语，地道发音素材' },
     { title: '雅思口语高频话题陪练', kw: '雅思口语 播客', desc: 'Part1-3 话题实战演练' },
@@ -381,6 +381,14 @@
     { title: '科技前沿聊播客', kw: '科技 播客', desc: 'AI 与前沿科技解读' },
     { title: '水产与农业科普', kw: '水产养殖 科普', desc: '专业相关的行业动态' }
   ];
+  function openPodcastLink(title, link) {
+    if (!link) { toast('该单集暂无链接'); return; }
+    if (link.includes('ximalaya.com') && typeof window.tryOpenApp === 'function') {
+      window.tryOpenApp('ximalaya://search?keyword=' + encodeURIComponent(title || ''), link);
+    } else {
+      window.open(link, '_blank');
+    }
+  }
   function renderPodcast() {
     const ps = v2('podcasts', []);
     const collected = ps.filter(p => p.collected).length;
@@ -398,17 +406,18 @@
     const podPoolIds = PODCAST_RECS.map((p, i) => 'pod_' + i);
     const podPicked = V.dailyPick(podPoolIds, 3, 2).map(id => PODCAST_RECS[Number(id.split('_')[1])]);
     podPicked.forEach((p) => {
-      const url = 'https://search.bilibili.com/all?keyword=' + encodeURIComponent(p.kw);
+      const url = 'https://www.ximalaya.com/search?q=' + encodeURIComponent(p.kw);
+      const scheme = 'ximalaya://search?keyword=' + encodeURIComponent(p.kw);
       const rid = 'pod_' + PODCAST_RECS.indexOf(p);
       h += `<div class="v2-vocab-row"><div class="v2-vocab-body">
         <div class="v2-vocab-word" style="font-size:14px">${esc(p.title)}</div>
         <div class="v2-vocab-mean">${esc(p.desc)}</div>
-        <a href="${url}" target="_blank" rel="noopener" class="v2-listen-btn">▶ 去听（可后台播放）↗</a>
+        <a href="#" onclick="window.tryOpenApp('${scheme}', '${url}'); return false;" class="v2-listen-btn">▶ 用喜马拉雅 App 收听</a>
         ${V.readBtn(rid)}
       </div></div>`;
     });
     h += `</div>
-      <div class="v2-tip-card">💡 点「去听」会跳转 B 站聚合页，B站/抖音都支持「听视频 / 后台播放」，关屏也能听，适合走路听。</div>
+      <div class="v2-tip-card">💡 点「收听」优先唤起你手机里的喜马拉雅 App；如果手机没装，会自动打开网页版搜索。</div>
       <button class="btn btn-primary btn-sm" data-act="podAdd" style="margin:12px 0">+ 添加单集</button>
       <div class="v2-pod-list">`;
     ps.slice().reverse().forEach(p => {
@@ -417,7 +426,7 @@
           <div class="v2-pod-meta">${esc(p.show)} · ${esc(p.host || '')} · ${fmtDate(p.date)}</div></div>
           <a class="v2-pod-fav" data-act="podFav" data-id="${p.id}">${p.collected ? '★' : '☆'}</a></div>
         <div class="v2-pod-row"><label>我的收获</label><textarea class="v2-input v2-input-sm" data-act="podGain" data-id="${p.id}" rows="2" placeholder="听到的一句话/一个观点…">${esc(p.gain || '')}</textarea></div>
-        <div class="v2-pod-ops">${p.link ? `<a href="${esc(p.link)}" target="_blank" rel="noopener" class="v2-pod-listen">收听 ↗</a>` : `<span class="v2-pod-nolink">暂无链接</span>`}<a data-act="podDel" data-id="${p.id}">删除</a></div>
+        <div class="v2-pod-ops">${p.link ? `<a href="#" data-act="podOpen" data-id="${p.id}" class="v2-pod-listen">▶ 收听</a>` : `<span class="v2-pod-nolink">暂无链接</span>`}<a data-act="podDel" data-id="${p.id}">删除</a></div>
       </div>`;
     });
     if (!ps.length) h += `<div class="empty"><div class="empty-text">还没有收藏的单集</div></div>`;
@@ -428,16 +437,18 @@
   window.V2ACT.podAdd = () => openForm('添加单集', `<div class="v2-form">
     <div class="form-group"><label>单集标题</label><input id="pd_title" class="v2-input"></div>
     <div class="form-row"><div class="form-group"><label>节目</label><input id="pd_show" class="v2-input"></div><div class="form-group"><label>主播</label><input id="pd_host" class="v2-input"></div></div>
-    <div class="form-group"><label>链接</label><input id="pd_link" class="v2-input" placeholder="收听地址"></div>
+    <div class="form-group"><label>链接</label><input id="pd_link" class="v2-input" placeholder="收听地址，不填则默认用标题搜索喜马拉雅"></div>
     <div class="v2-form-actions"><button class="btn btn-primary" data-act="podSave">保存</button><button class="btn btn-outline" onclick="closeGeneric()">取消</button></div></div>`);
   window.V2ACT.podSave = () => {
     const title = gid('pd_title').value.trim(); if (!title) { toast('请填写标题'); return; }
-    const ps = v2('podcasts', []); ps.push({ id: gId(), title, show: gid('pd_show').value.trim(), host: gid('pd_host').value.trim(), link: gid('pd_link').value.trim(), collected: false, date: today, gain: '' });
+    let link = gid('pd_link').value.trim();
+    if (!link) link = 'https://www.ximalaya.com/search?q=' + encodeURIComponent(title);
+    const ps = v2('podcasts', []); ps.push({ id: gId(), title, show: gid('pd_show').value.trim(), host: gid('pd_host').value.trim(), link, collected: false, date: today, gain: '' });
     v2set('podcasts', ps); if (typeof closeGeneric === 'function') closeGeneric(); toast('已添加'); render();
   };
   window.V2ACT.podFav = (el) => { const ps = v2('podcasts', []); const i = ps.findIndex(x => x.id === el.dataset.id); if (i >= 0) { ps[i].collected = !ps[i].collected; v2set('podcasts', ps); render(); } };
   window.V2ACT.podGain = (el) => { const ps = v2('podcasts', []); const i = ps.findIndex(x => x.id === el.dataset.id); if (i >= 0) { ps[i].gain = el.value; v2set('podcasts', ps); } };
-  window.V2ACT.podOpen = (el) => { const p = v2('podcasts', []).find(x => x.id === el.dataset.id); if (p && p.link) window.open(p.link, '_blank'); else toast('该单集暂无链接'); };
+  window.V2ACT.podOpen = (el) => { const p = v2('podcasts', []).find(x => x.id === el.dataset.id); openPodcastLink(p && p.title, p && p.link); };
   window.V2ACT.podDel = (el) => { if (!confirm('删除该单集？')) return; v2set('podcasts', v2('podcasts', []).filter(x => x.id !== el.dataset.id)); toast('已删除'); render(); };
 
   /* ===================== 新闻资讯 ===================== */

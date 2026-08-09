@@ -279,11 +279,11 @@
       { id: gId(), title: '循环水养殖系统(RAS)能效综述', source: 'Aquacultural Engineering', link: '', note: '重点看能耗与产量权衡', fav: true },
       { id: gId(), title: '微藻在养殖废水处理中的应用', source: 'Journal of Cleaner Production', link: '', note: '可做本科毕设方向', fav: false }
     ]);
-    // 播客
+    // 播客（链接优先唤起喜马拉雅 App，失败 fallback 到网页搜索）
     seed('podcasts', [
-      { id: gId(), title: '怎样把科研讲给普通人听', show: '博物志', host: '科普电台', link: 'https://www.xiaoyuzhoufm.com/search?q=' + encodeURIComponent('博物志'), collected: true, date: '2026-07-30', note: '表达技巧可迁移到自媒体', gain: '' },
-      { id: gId(), title: '大学生副业避坑指南', show: '搞钱女孩', host: '财经访谈', link: 'https://www.xiaoyuzhoufm.com/search?q=' + encodeURIComponent('搞钱女孩'), collected: false, date: '2026-07-25', note: '', gain: '' },
-      { id: gId(), title: '水产养殖里的那些黑科技', show: '硬核水产', host: '行业对谈', link: 'https://www.xiaoyuzhoufm.com/search?q=' + encodeURIComponent('水产养殖'), collected: false, date: '2026-07-20', note: '', gain: '' }
+      { id: gId(), title: '怎样把科研讲给普通人听', show: '博物志', host: '科普电台', link: 'https://www.ximalaya.com/search?q=' + encodeURIComponent('博物志'), collected: true, date: '2026-07-30', note: '表达技巧可迁移到自媒体', gain: '' },
+      { id: gId(), title: '大学生副业避坑指南', show: '搞钱女孩', host: '财经访谈', link: 'https://www.ximalaya.com/search?q=' + encodeURIComponent('搞钱女孩'), collected: false, date: '2026-07-25', note: '', gain: '' },
+      { id: gId(), title: '水产养殖里的那些黑科技', show: '硬核水产', host: '行业对谈', link: 'https://www.ximalaya.com/search?q=' + encodeURIComponent('水产养殖'), collected: false, date: '2026-07-20', note: '', gain: '' }
     ]);
     // 新闻
     seed('news', [
