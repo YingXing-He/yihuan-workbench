@@ -1129,7 +1129,33 @@ const DAILY_SEED = {
   ]
 };
 
-// 尝试用 App scheme 唤起本地应用，失败则打开网页 fallback
+// 是否手机/平板（触摸屏窄屏设备，优先唤起原生 App）
+window.isMobile = function () {
+  return /Android|iPhone|iPad|iPod|Mobile|Windows Phone|HarmonyOS/i.test(navigator.userAgent) ||
+    (('ontouchstart' in window) && Math.min(window.innerWidth, window.innerHeight) < 900);
+};
+// 统一媒体跳转：手机/平板尝试唤起原生 App（带关键词直达搜索结果），失败回退官网；电脑直接进官网
+window.openMedia = function (platform, keyword) {
+  const q = encodeURIComponent(keyword || '');
+  const web = {
+    bili:    'https://search.bilibili.com/all?keyword=' + q,
+    douyin:  'https://www.douyin.com/search/' + q,
+    xhs:     'https://www.xiaohongshu.com/search_result?keyword=' + q,
+    ximalaya:'https://www.ximalaya.com/search?q=' + q
+  }[platform] || ('https://www.baidu.com/s?wd=' + q);
+  if (!window.isMobile()) { window.open(web, '_blank'); return; }
+  // 移动端：构造 scheme 先尝试唤起 App，250ms 未唤起则回退官网
+  const scheme = {
+    bili:    'bilibili://search/?keyword=' + q,
+    douyin:  'snssdk1128://search?keyword=' + q,
+    xhs:     'xhsdiscover://search/result?keyword=' + q,
+    ximalaya:'ximalaya://search?keyword=' + q
+  }[platform];
+  if (!scheme) { window.open(web, '_blank'); return; }
+  if (typeof window.tryOpenApp === 'function') window.tryOpenApp(scheme, web);
+  else window.open(web, '_blank');
+};
+// 老接口保留（仅喜马拉雅单集复用）
 window.tryOpenApp = function (scheme, fallbackUrl) {
   var iframe = document.createElement('iframe');
   iframe.style.cssText = 'width:0;height:0;border:0;position:absolute;top:-9999px;left:-9999px;';
@@ -1139,7 +1165,6 @@ window.tryOpenApp = function (scheme, fallbackUrl) {
   function cleanup() { if (iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe); }
   setTimeout(function () {
     cleanup();
-    // 如果 App 没有唤起，页面仍然在当前页且耗时很短，则 fallback 到网页
     if (Date.now() - t0 < 900) window.open(fallbackUrl, '_blank');
   }, 500);
 };
@@ -1213,6 +1238,11 @@ window.loadDailyHome = async function () {
     if (badge) { badge.textContent = '实时 · ' + (content.generated_at ? content.generated_at.slice(0, 10) : today); badge.style.background = 'var(--accent)'; badge.style.color = '#fff'; }
     // 把真实数据缓存到 localStorage，供「自媒体/B站/播客/读书」等模块读取
     window.DAILY = content;
+    // 统一每日数据缓存：整包存入 localStorage，供各板块消费（读 Daily.get(section)）
+    if (content._sections) {
+      window.DailyCache = content._sections;
+      DB.set('daily_cache', { date: today, data: content._sections });
+    }
     if (content.hot && content.hot.length) {
       DB.set('v2_sm_hot', content.hot);
       DB.set('v2_sm_hot_time', content.generated_at || today);
@@ -1225,6 +1255,26 @@ window.loadDailyHome = async function () {
     if (content.ai_news) DB.set('daily_ai_news', content.ai_news);
   }
   box.innerHTML = renderDailyInner(content);
+};
+
+// 统一每日数据中枢：各板块优先读 Supabase 缓存，失败回退本地种子
+window.Daily = {
+  cache: null,
+  ensure() {
+    if (this.cache) return this.cache;
+    try {
+      const saved = DB.get('daily_cache', null);
+      const today = todayStr();
+      if (saved && saved.date === today && saved.data) this.cache = saved.data;
+      else if (window.DAILY && window.DAILY._sections) this.cache = window.DAILY._sections;
+    } catch (e) {}
+    return this.cache || {};
+  },
+  get(section, fallback) {
+    const c = this.ensure();
+    if (c && c[section] && (Array.isArray(c[section]) ? c[section].length : true)) return c[section];
+    return fallback;
+  }
 };
 
 // 日历渲染
@@ -1550,9 +1600,13 @@ function renderIeltsPlan() {
   });
   h += `</div>`;
 
-  // AI 优化
+  // AI 优化（优先读后端每日脚本已生成的计划，无需前端再配 key）
+  const aiCached = (window.Daily && window.Daily.get('ielts_ai_plan', null)) || DB.get('ielts_plan_ai', null);
+  const aiBoxInit = aiCached
+    ? '<div style="white-space:pre-wrap;line-height:1.7">' + esc(aiCached) + '</div>'
+    : '在电脑端定时任务跑完后，这里会自动显示今日 AI 优化计划（也可在「设置 → AI 模型」配置模型后点右侧按钮即时生成）。';
   h += `<div class="v2-section"><div class="v2-section-title">🤖 让 AI 优化今日计划 <button class="btn btn-outline btn-sm" style="float:right" data-act="ieltsAiPlan">用 AI 重新规划</button></div>
-    <div id="ieltsAiBox" class="v2-tip-card">${esc(DB.get('ielts_plan_ai', '在「设置 → AI 模型」配置好模型后，点右上角让 AI 结合你的全部作业进度、截止日与薄弱项，重新排布今天的任务量与时长。'))}</div></div>`;
+    <div id="ieltsAiBox" class="v2-tip-card">${aiBoxInit}</div></div>`;
 
   h += `</div>`;
   return h;
@@ -1614,10 +1668,20 @@ window.V2ACT.ieltsPlanDone = (el) => {
   DB.set('ielts_hw', hwArr); DB.set('ielts_plan', plan); render();
 };
 window.V2ACT.ieltsAiPlan = async (el) => {
-  const box = gid('ieltsAiBox'); if (box) box.innerHTML = '⏳ AI 正在分析你的全部作业…';
+  const box = gid('ieltsAiBox');
+  // 优先读取后端每日脚本已生成的「AI 优化计划」（DeepSeek 已算好，无需前端再配 key）
+  const cached = (window.Daily && window.Daily.get('ielts_ai_plan', null));
+  if (cached) {
+    DB.set('ielts_plan_ai', cached);
+    if (box) box.innerHTML = '<div style="white-space:pre-wrap;line-height:1.7">' + esc(cached) + '</div>';
+    toast('已加载今日 AI 优化计划 ✓');
+    return;
+  }
+  // 无缓存：尝试浏览器内调用（需用户在「设置 → AI 模型」配置）
+  if (box) box.innerHTML = '⏳ 正在生成今日 AI 优化计划…';
   if (!window.AI || !window.AI.call || !window.AI.providers || !window.AI.providers().length) {
-    if (box) box.innerHTML = '⚠️ 你还没有在「设置 → AI 模型」里配置任何模型。先去添加一个（支持多个），再让 AI 帮你规划。';
-    toast('请先配置 AI 模型'); return;
+    if (box) box.innerHTML = '⚠️ 今日计划尚未生成（电脑端定时任务未跑）。如需在网页端即时生成，请先到「设置 → AI 模型」配置至少一个模型；或等电脑定时任务跑完。';
+    toast('今日计划未就绪'); return;
   }
   const hw = DB.get('ielts_hw', []) || [];
   const summary = hw.map(h => `${ieltsOrgName(h.orgId)}·${h.title}（${h.type}）：进度 ${h.done || 0}/${h.total || 0}，每周${h.perWeek || 3}次${h.deadline ? ('，截止' + h.deadline) : ''}，连续未推进${h.miss || 0}天`).join('\n');
@@ -1908,11 +1972,9 @@ function renderSpeakingPage() {
 }
 
 function renderSpeakingShadow() {
-  const data = BILI_VIDEOS;
-  const pool = (data && data.shadow) ? data.shadow : [];
-  const doy = Math.floor((new Date() - new Date(new Date().getFullYear(),0,0)) / 86400000);
-  const v = pool.length ? pool[doy % pool.length] : null;
-  const embed = v ? videoHTML('https://www.bilibili.com/video/' + v.bvid) : '<div class="video-fallback"><span>暂无推荐视频</span></div>';
+  const sp = (window.Daily && window.Daily.get('speaking', null)) || {};
+  const v = sp.shadow || null;   // 每日真实视频（Daily 中枢提供，失败则 null 回退提示）
+  const embed = v && v.bvid ? videoHTML('https://www.bilibili.com/video/' + v.bvid) : '<div class="video-fallback"><span>今日推荐视频生成中，稍后刷新</span></div>';
   const videos = DB.get('shadow_videos', []);
   return `
     <div class="card">
@@ -2343,10 +2405,16 @@ function renderSmIdeas(cat) {
       <div class="v2-hot-src">点击跳转抖音搜索 · 来源：${esc(hotSource)}</div>
     </div>` : '';
 
-  // 每日灵感：从种子库按本地自然日确定性抽 3 条，每天自动更新（带参考视频）
-  const dayIdx = Math.floor(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime() / 86400000);
-  const daily = [];
-  for (let k = 0; k < 3; k++) { const idx = (dayIdx + k * 7) % SELFMEDIA_IDEA_SEED.length; daily.push({ s: SELFMEDIA_IDEA_SEED[idx], idx }); }
+  // 每日灵感：优先读 Daily 中枢真实生成（DeepSeek 三方向），失败回退本地种子轮播
+  const smIdeas = (window.Daily && window.Daily.get('sm_ideas', null)) || [];
+  let daily;
+  if (smIdeas.length) {
+    daily = smIdeas.map((s, i) => ({ s, idx: i }));
+  } else {
+    const dayIdx = Math.floor(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime() / 86400000);
+    daily = [];
+    for (let k = 0; k < 3; k++) { const idx = (dayIdx + k * 7) % SELFMEDIA_IDEA_SEED.length; daily.push({ s: SELFMEDIA_IDEA_SEED[idx], idx }); }
+  }
 
   const filtered = activeCat==='全部' ? ideas : ideas.filter(i => i.category===activeCat);
 
@@ -2358,7 +2426,7 @@ function renderSmIdeas(cat) {
         <div class="sm-daily-item">
           <div class="sm-daily-row"><b>${esc(d.s.title)}</b> <span class="idea-category" style="margin-left:6px">${esc(d.s.cat)}</span> ${window.V2.readBtn('smidea_' + d.idx)}</div>
           <div class="sm-daily-thought">${esc(d.s.thought)}</div>
-          <a class="btn btn-outline btn-xs" href="${window.V2.vidUrl('douyin', d.s.ref)}" target="_blank" rel="noopener">抖音 ↗</a><a class="btn btn-outline btn-xs" href="${window.V2.vidUrl('xhs', d.s.ref)}" target="_blank" rel="noopener">小红书 ↗</a>
+          ${window.V2.mediaLink('douyin', d.s.ref, '抖音')}${window.V2.mediaLink('xhs', d.s.ref, '小红书')}
         </div>`).join('')}
     </div>
     <div class="idea-tags">
@@ -2377,7 +2445,7 @@ function renderSmIdeas(cat) {
             <button class="btn btn-xs ${i.fav?'btn-secondary':'btn-outline'}" data-act="toggleFav" data-id="${i.id}">${i.fav?'★ 已收藏':'☆ 收藏'}</button>
             <button class="btn btn-xs btn-outline" data-act="copyIdea" data-id="${i.id}">📋 复制</button>
             <button class="btn btn-xs btn-outline" data-act="useIdea" data-id="${i.id}">✅ 已使用</button>
-            <a class="btn btn-xs btn-outline" href="${window.V2.vidUrl('douyin', i.title)}" target="_blank" rel="noopener">抖音 ↗</a><a class="btn btn-xs btn-outline" href="${window.V2.vidUrl('xhs', i.title)}" target="_blank" rel="noopener">小红书 ↗</a>
+            ${window.V2.mediaLink('douyin', i.title, '抖音')}${window.V2.mediaLink('xhs', i.title, '小红书')}
           </div>
         </div>
       `).join('')
@@ -2435,9 +2503,9 @@ function renderSmVirals() {
           <div class="viral-meta"><span class="tag tag-red">${esc(v.hotspot)}</span></div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
-          <a class="btn btn-primary btn-xs" href="${window.V2.vidUrl('douyin', (v.title||'').replace(/爆款|二创/g,''))}" target="_blank" rel="noopener">抖音·原片 ↗</a>
-          <a class="btn btn-outline btn-xs" href="${window.V2.vidUrl('douyin', (v.title||'') + ' 二创 跟拍')}" target="_blank" rel="noopener">抖音·二创 ↗</a>
-          <a class="btn btn-outline btn-xs" href="${window.V2.vidUrl('xhs', (v.title||'') + ' 二创 跟拍')}" target="_blank" rel="noopener">小红书·二创 ↗</a>
+          ${window.V2.mediaLink('douyin', (v.title||'').replace(/爆款|二创/g,''), '抖音·原片')}
+          ${window.V2.mediaLink('douyin', (v.title||'') + ' 二创 跟拍', '抖音·二创')}
+          ${window.V2.mediaLink('xhs', (v.title||'') + ' 二创 跟拍', '小红书·二创')}
           <button class="btn btn-xs ${v.fav?'btn-secondary':'btn-outline'}" data-act="viralsFav" data-id="${v.id}">${v.fav?'★ 已收藏':'☆ 收藏'}</button>
           <button class="btn btn-outline btn-xs" data-act="addViralsTask" data-title="${esc(v.title)}">+ 任务</button>
         </div>
@@ -4001,10 +4069,8 @@ function markSceneDone(idx) {
 }
 
 function renderTopicsLibrary() {
-  const data = BILI_VIDEOS;
-  const pool = (data && data.topic) ? data.topic : [];
-  const topicDoy = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
-  const firstVid = pool.length ? pool[topicDoy % pool.length] : null;
+  const sp = (window.Daily && window.Daily.get('speaking', null)) || {};
+  const firstVid = sp.topic || null;   // 每日真实话题素材视频
   const embed = firstVid ? videoHTML('https://www.bilibili.com/video/' + firstVid.bvid) : '';
   const summary = DB.get('topic_summary', []);
   return `

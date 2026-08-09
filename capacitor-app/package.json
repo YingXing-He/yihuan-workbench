@@ -1,0 +1,13 @@
+{
+  "name": "yihuan-workbench-app",
+  "version": "1.0.0",
+  "description": "易欢工作台安卓套壳（Capacitor 在线加载模式）",
+  "scripts": {
+    "build-android": "echo 请按 README 步骤执行"
+  },
+  "devDependencies": {
+    "@capacitor/core": "^5.7.0",
+    "@capacitor/cli": "^5.7.0",
+    "@capacitor/android": "^5.7.0"
+  }
+}

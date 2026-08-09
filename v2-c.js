@@ -431,18 +431,22 @@
         <div class="tab-btn${tab==='outfit'?' active':''}" data-act="beautyTab" data-tab="outfit">👗 穿搭</div>
       </div><div class="v2-tab-body">`;
 
+    const beauty = (window.Daily && window.Daily.get('beauty', null)) || [];
+    const skinV = beauty.filter(v => v.tag === '护肤');
+    const makeupV = beauty.filter(v => v.tag === '美妆');
+    const outfitV = beauty.filter(v => v.tag === '穿搭');
     if (tab === 'skin') {
-      const picks = V.dailyPick(SKIN_VIDEOS.map(v => 'skin_' + v.id), 3, 10);
-      h += `<div class="v2-ex-head">今日 ${picks.length} 条护肤推荐 · 明日自动更新</div>`;
-      picks.forEach(rid => { const v = SKIN_VIDEOS.find(x => 'skin_' + x.id === rid); h += renderBeautyVideoCard(v, rid, ['xhs', 'bili']); });
+      const picks = skinV.length ? skinV.slice(0, 3) : V.dailyPick(SKIN_VIDEOS.map(v => 'skin_' + v.id), 3, 10).map(rid => SKIN_VIDEOS.find(x => 'skin_' + x.id === rid));
+      h += `<div class="v2-ex-head">今日 ${picks.length} 条护肤推荐 · 每日自动更新</div>`;
+      picks.forEach((v, i) => h += renderBeautyVideoCard(v, 'skin_' + i, ['xhs', 'bili']));
     } else if (tab === 'makeup') {
-      const picks = V.dailyPick(MAKEUP_VIDEOS.map(v => 'mk_' + v.id), 3, 11);
-      h += `<div class="v2-ex-head">今日 ${picks.length} 条美妆推荐 · 明日自动更新</div>`;
-      picks.forEach(rid => { const v = MAKEUP_VIDEOS.find(x => 'mk_' + x.id === rid); h += renderBeautyVideoCard(v, rid, ['xhs', 'bili']); });
+      const picks = makeupV.length ? makeupV.slice(0, 3) : V.dailyPick(MAKEUP_VIDEOS.map(v => 'mk_' + v.id), 3, 11).map(rid => MAKEUP_VIDEOS.find(x => 'mk_' + x.id === rid));
+      h += `<div class="v2-ex-head">今日 ${picks.length} 条美妆推荐 · 每日自动更新</div>`;
+      picks.forEach((v, i) => h += renderBeautyVideoCard(v, 'mk_' + i, ['xhs', 'bili']));
     } else {
-      const picks = V.dailyPick(OUTFIT_VIDEOS.map(v => 'ofv_' + v.id), 3, 12);
-      h += `<div class="v2-ex-head">今日 ${picks.length} 条穿搭推荐 · 明日自动更新</div>`;
-      picks.forEach(rid => { const v = OUTFIT_VIDEOS.find(x => 'ofv_' + x.id === rid); h += renderBeautyVideoCard(v, rid, ['xhs', 'douyin']); });
+      const picks = outfitV.length ? outfitV.slice(0, 3) : V.dailyPick(OUTFIT_VIDEOS.map(v => 'ofv_' + v.id), 3, 12).map(rid => OUTFIT_VIDEOS.find(x => 'ofv_' + x.id === rid));
+      h += `<div class="v2-ex-head">今日 ${picks.length} 条穿搭推荐 · 每日自动更新</div>`;
+      picks.forEach((v, i) => h += renderBeautyVideoCard(v, 'ofv_' + i, ['xhs', 'douyin']));
     }
     h += `</div></div>`;
     return h;
@@ -450,7 +454,7 @@
   function renderBeautyVideoCard(v, rid, platforms) {
     const plats = (platforms && platforms.length) ? platforms : ['xhs', 'bili'];
     const platLabel = { xhs: '小红书', douyin: '抖音', bili: 'B站' };
-    const links = plats.map(p => `<a class="btn btn-outline btn-xs" href="${V.vidUrl(p, v.kw)}" target="_blank" rel="noopener">${platLabel[p] || p} ↗</a>`).join('');
+    const links = plats.map(p => V.mediaLink(p, v.kw, platLabel[p] || p)).join('');
     return `<div class="v2-video-card v2-beauty-card">
       <div class="v2-video-thumb">▶</div>
       <div class="v2-video-info">

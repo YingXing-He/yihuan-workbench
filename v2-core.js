@@ -151,12 +151,12 @@
     const rotated = poolIds.slice(shift).concat(poolIds.slice(0, shift));
     return rotated.slice(0, Math.min(n, len));
   }
-  // 统一视频源：只推荐 抖音 / 小红书 / B站 的「网页搜索」链接（桌面与手机浏览器均可稳定打开，不会跳到奇怪页面）
-  function vidUrl(platform, kw) {
-    const q = encodeURIComponent(kw || '');
-    if (platform === 'douyin') return 'https://www.douyin.com/search/' + q;
-    if (platform === 'xhs') return 'https://www.xiaohongshu.com/search_result?keyword=' + q;
-    return 'https://search.bilibili.com/all?keyword=' + q; // bili 默认
+  // 统一视频源：手机尝试唤起原生 App（带关键词进搜索结果），电脑进官网
+  function vidUrl(platform, kw) { return mediaLink(platform, kw); }
+  function mediaLink(platform, kw, label) {
+    const safe = (kw || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const p = { douyin: '抖音', xhs: '小红书', bili: 'B站', ximalaya: '喜马拉雅' }[platform] || platform;
+    return `<a href="#" onclick="window.openMedia('${platform}','${safe}');return false;" class="btn btn-outline btn-xs">${label || p} ↗</a>`;
   }
 
   /* ---------- 通用：CSS 条形图 ---------- */

@@ -122,7 +122,7 @@
         <div class="v2-ai-cover">${ICONS.research}</div>
         <div class="v2-ai-top"><span class="badge badge-red">${esc(v.tag)}</span>${V.readBtn(rid)}</div>
         <div class="v2-ai-title">${esc(v.t)}</div>
-        <div class="v2-ai-pick-ops"><a class="btn btn-outline btn-xs" href="${V.vidUrl('bili', v.kw)}" target="_blank" rel="noopener">B站 ↗</a><a class="btn btn-outline btn-xs" href="${V.vidUrl('douyin', v.kw)}" target="_blank" rel="noopener">抖音 ↗</a></div></div>`; });
+        <div class="v2-ai-pick-ops">${V.mediaLink('bili', v.kw, 'B站')}${V.mediaLink('douyin', v.kw, '抖音')}</div></div>`; });
       h += `</div><div class="v2-tip-card">💡 每天跟着一个方法视频动手练，标记「已看」后次日自动换下一个；没标记的可能再次推荐。把练过的记到「实验记录」里。</div>`;
     } else if (tab === 'papers') {
       h += `<div class="v2-tip-card">📡 每日 10 篇来自 NCBI / Europe PMC 的前沿论文（水产·对虾·免疫·病毒细菌感染方向，IF≥4，真实 DOI 可点击下载）。最高 IF 的一篇已自动进入「微信公众号 → 本周精读候选」。点「🌟 选为本周精读」可手动加入。</div>`;
@@ -143,7 +143,7 @@
         <div class="v2-ai-cover">${ICONS.research}</div>
         <div class="v2-ai-top"><span class="badge badge-red">${esc(v.tag)}</span>${V.readBtn(rid)}</div>
         <div class="v2-ai-title">${esc(v.t)}</div>
-        <div class="v2-ai-pick-ops"><a class="btn btn-outline btn-xs" href="${V.vidUrl('bili', v.kw)}" target="_blank" rel="noopener">B站 ↗</a><a class="btn btn-outline btn-xs" href="${V.vidUrl('douyin', v.kw)}" target="_blank" rel="noopener">抖音 ↗</a></div></div>`; });
+        <div class="v2-ai-pick-ops">${V.mediaLink('bili', v.kw, 'B站')}${V.mediaLink('douyin', v.kw, '抖音')}</div></div>`; });
       h += `</div><div class="v2-tip-card">💡 绘图前先定好期刊的尺寸与字体要求，避免返工。点「B站 ↗」后台播放，回来勾选已看。</div>`;
     }
     h += `</div></div>`;
@@ -540,9 +540,10 @@
       { t: 'Python 自动化办公', kw: 'Python 自动化办公 教程', tag: '效率' },
       { t: '数字人带货新玩法', kw: '数字人 带货 教程', tag: '实战' }
     ];
+    const aiVideos = (window.Daily && window.Daily.get('ai_videos', null)) || [];
     const aiDay = Math.floor(Date.now() / 86400000);
-    const aiRec = aiDailyPool[aiDay % aiDailyPool.length];
-    const aiRecUrl = 'https://search.bilibili.com/all?keyword=' + encodeURIComponent(aiRec.kw);
+    const aiRec = aiVideos.length ? aiVideos[aiDay % aiVideos.length] : (aiDailyPool[aiDay % aiDailyPool.length]);
+    const aiRecUrl = aiRec.bvid ? ('https://www.bilibili.com/video/' + aiRec.bvid) : ('https://search.bilibili.com/all?keyword=' + encodeURIComponent(aiRec.kw));
     let h = `<div class="page">
       <div class="page-head"><div class="page-title">AI学习<span class="help-badge" data-help="ai"></span></div>
         <div class="page-sub">系统化教程 · 每日精进 · 已学追踪</div></div>

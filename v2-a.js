@@ -49,8 +49,8 @@
     let courses = v2('school_courses', []);
     const dueSoon = courses.filter(c => !c.done && daysUntil(c.deadline) <= 1 && daysUntil(c.deadline) >= 0);
 
-    // 考研每日推荐视频
-    const kv = (BILI_VIDEOS && BILI_VIDEOS.kaoyan) ? BILI_VIDEOS.kaoyan : [];
+    // 考研每日推荐视频（真实：Daily 中枢；失败回退空）
+    const kv = (window.Daily && window.Daily.get('kaoyan', null)) || [];
     const doy = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
     const picks = [];
     for (let i = 0; i < 5 && kv.length; i++) picks.push(kv[(doy + i) % kv.length]);
