@@ -34,7 +34,8 @@
     review: `<svg viewBox="0 0 22 22" width="20" height="20" fill="none" stroke="${R}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3.5h9l3 3V18a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z"/><path d="M8 9h6M8 12h6M8 15h3"/></svg>`,
     memo: `<svg viewBox="0 0 22 22" width="20" height="20" fill="none" stroke="${R}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="3" width="13" height="16" rx="2"/><path d="M8 7h6M8 10h6M8 13h4"/></svg>`,
     settings: `<svg viewBox="0 0 22 22" width="20" height="20" fill="none" stroke="${R}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="2.6"/><path d="M11 3v2.4M11 16.6V19M19 11h-2.4M5.4 11H3M16.5 5.5l-1.7 1.7M7.2 14.8l-1.7 1.7M16.5 16.5l-1.7-1.7M7.2 7.2 5.5 5.5"/></svg>`,
-    fortune: `<svg viewBox="0 0 22 22" width="20" height="20" fill="none" stroke="${R}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="13" r="6.5"/><path d="M11 6.5V3M8.4 4.6 6.3 2.5M13.6 4.6l2.1-2.1M4 13H1M21 13h-3"/><path d="M8.4 13.5l1.6 1.6 3.2-3.4" stroke-width="1.4"/></svg>`
+    fortune: `<svg viewBox="0 0 22 22" width="20" height="20" fill="none" stroke="${R}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="13" r="6.5"/><path d="M11 6.5V3M8.4 4.6 6.3 2.5M13.6 4.6l2.1-2.1M4 13H1M21 13h-3"/><path d="M8.4 13.5l1.6 1.6 3.2-3.4" stroke-width="1.4"/></svg>`,
+    timeline: `<svg viewBox="0 0 22 22" width="20" height="20" fill="none" stroke="${R}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h16"/><circle cx="7" cy="11" r="2"/><circle cx="15" cy="11" r="2"/><path d="M11 4v3M11 15v3"/></svg>`
   };
 
   /* ---------- 重写导航配置（文档顺序，全部真实模块） ---------- */
@@ -72,6 +73,7 @@
     { key: 'skincare', label: '美妆穿搭', icon: ICONS.skincare, group: 'more' },
     { key: 'habit', label: '习惯养成', icon: ICONS.habit, group: 'more' },
     { key: 'review', label: '每日复盘', icon: ICONS.review, group: 'more' },
+    { key: 'timeline', label: '时间流', icon: ICONS.timeline, group: 'more' },
     { key: 'fortune', label: '今日运势', icon: ICONS.fortune, group: 'more' },
     { key: 'memo', label: '备忘录', icon: ICONS.memo, group: 'more' },
     { key: 'settings', label: '设置与数据', icon: ICONS.settings, group: 'end' }
@@ -81,12 +83,13 @@
   window.V2VIEWS = window.V2VIEWS || {};
   window.V2ACT = window.V2ACT || {};
 
-  const V2_ROUTES = ['study','research','podcast','news','books','express','ai','finance','gold','financelife','diet','sport','skincare','habit','review','fortune','xianyu','channels','wechat'];
+  const V2_ROUTES = ['study','research','podcast','news','books','express','ai','finance','gold','financelife','diet','sport','skincare','habit','review','timeline','fortune','xianyu','channels','wechat'];
   const V2_TITLES = {
     study:'学习管理', research:'科研助手', podcast:'播客精选', news:'新闻资讯', books:'读书推荐',
     express:'表达能力', ai:'AI学习', finance:'小账本', gold:'黄金财经', financelife:'理财学习',
     diet:'饮食打卡', sport:'运动管理', skincare:'美妆穿搭', habit:'习惯养成', review:'每日复盘',
-    fortune:'今日运势', xianyu:'闲鱼', channels:'微信视频号', wechat:'微信公众号'
+    fortune:'今日运势', xianyu:'闲鱼', channels:'微信视频号', wechat:'微信公众号',
+    timeline:'时间流'
   };
   // 暴露到 window，便于后续脚本（如 v2-d 搜索/AI帮手）扩展路由
   window.V2_ROUTES = V2_ROUTES;
