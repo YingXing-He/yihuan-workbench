@@ -1134,17 +1134,25 @@ function renderDailyInner(c) {
   if (c.plan) {
     h += `<div class="daily-block"><div class="daily-h">📌 今日 AI 计划</div><div class="daily-plan">${esc(c.plan)}</div></div>`;
   }
+  if (c.ai_news && c.ai_news.length) {
+    h += `<div class="daily-block"><div class="daily-h">📰 AI / 科技前沿（真实新闻）</div>` +
+      c.ai_news.map(x => `<a class="daily-link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.summary ? `<span class="daily-sub">${esc(x.summary)}</span>` : ''}`).join('') + `</div>`;
+  }
   if (c.hot && c.hot.length) {
-    h += `<div class="daily-block"><div class="daily-h">🔥 实时热点</div>` +
-      c.hot.map(x => `<a class="daily-link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">${esc(x.title)}</a>`).join('') + `</div>`;
+    h += `<div class="daily-block"><div class="daily-h">🔥 实时热点（点击跳转平台搜索）</div>` +
+      c.hot.map(x => `<a class="daily-link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.heat ? `<span class="daily-sub">${esc(x.heat)}</span>` : ''}`).join('') + `</div>`;
+  }
+  if (c.bili && c.bili.length) {
+    h += `<div class="daily-block"><div class="daily-h">📺 B站推荐（真实视频）</div>` +
+      c.bili.map(x => `<a class="daily-link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.up ? `<span class="daily-sub">${esc(x.up)}</span>` : ''}`).join('') + `</div>`;
   }
   if (c.podcasts && c.podcasts.length) {
     h += `<div class="daily-block"><div class="daily-h">🎧 播客推荐</div>` +
-      c.podcasts.map(x => `<div class="daily-item"><b>${esc(x.title)}</b>${x.note ? `<span>${esc(x.note)}</span>` : ''}</div>`).join('') + `</div>`;
+      c.podcasts.map(x => `<div class="daily-item"><b>${esc(x.title)}</b>${x.note ? `<span>${esc(x.note)}</span>` : ''}${x.url ? `<a class="daily-link" href="${esc(x.url)}" target="_blank" rel="noopener">▶ 收听</a>` : ''}</div>`).join('') + `</div>`;
   }
   if (c.books && c.books.length) {
     h += `<div class="daily-block"><div class="daily-h">📚 读书推荐</div>` +
-      c.books.map(x => `<div class="daily-item"><b>${esc(x.title)}</b>${x.author ? ` · ${esc(x.author)}` : ''}${x.note ? `<span>${esc(x.note)}</span>` : ''}</div>`).join('') + `</div>`;
+      c.books.map(x => `<div class="daily-item"><b>${esc(x.title)}</b>${x.author ? ` · ${esc(x.author)}` : ''}${x.note ? `<span>${esc(x.note)}</span>` : ''}${x.url ? `<a class="daily-link" href="${esc(x.url)}" target="_blank" rel="noopener">🔍 查书</a>` : ''}</div>`).join('') + `</div>`;
   }
   if (c.ai_videos && c.ai_videos.length) {
     h += `<div class="daily-block"><div class="daily-h">🤖 AI 学习视频</div>` +
@@ -1153,7 +1161,7 @@ function renderDailyInner(c) {
   return h;
 }
 
-// 首页「今日 AI 精选」加载：从 Supabase daily_content 读当天内容，回退种子
+// 首页「今日 AI 精选」加载：从 Supabase daily_content 读当天/昨天内容，回退种子
 window.loadDailyHome = async function () {
   const box = document.getElementById('dailyContent');
   const badge = document.getElementById('dailyBadge');
@@ -1161,17 +1169,34 @@ window.loadDailyHome = async function () {
   const today = todayStr();
   let content = null;
   try {
-    if (window.SupaBackend) content = await window.SupaBackend.readDaily(today);
+    if (window.SupaBackend) {
+      content = await window.SupaBackend.readDaily(today);
+      if (!content) {
+        const d = new Date(); d.setDate(d.getDate() - 1);
+        const p = n => ('' + n).padStart(2, '0');
+        const ys = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+        content = await window.SupaBackend.readDaily(ys);
+      }
+    }
   } catch (e) { content = null; }
 
   if (!content) {
     content = DAILY_SEED;
-    if (badge) badge.textContent = '样例';
-    if (badge) badge.style.background = 'rgba(255,255,255,.6)';
+    if (badge) { badge.textContent = '样例'; badge.style.background = 'rgba(255,255,255,.6)'; badge.style.color = ''; }
   } else {
-    if (badge) badge.textContent = '实时 · ' + (content.generated_at ? content.generated_at.slice(0, 10) : '');
-    if (badge) badge.style.background = 'var(--accent)';
-    if (badge) badge.style.color = '#fff';
+    if (badge) { badge.textContent = '实时 · ' + (content.generated_at ? content.generated_at.slice(0, 10) : today); badge.style.background = 'var(--accent)'; badge.style.color = '#fff'; }
+    // 把真实数据缓存到 localStorage，供「自媒体/B站/播客/读书」等模块读取
+    window.DAILY = content;
+    if (content.hot && content.hot.length) {
+      DB.set('v2_sm_hot', content.hot);
+      DB.set('v2_sm_hot_time', content.generated_at || today);
+      DB.set('v2_sm_hot_source', '每日真实热点');
+      DB.set('v2_sm_hot_real', '1');
+    }
+    if (content.bili && content.bili.length) DB.set('daily_bili', content.bili);
+    if (content.podcasts) DB.set('daily_podcasts', content.podcasts);
+    if (content.books) DB.set('daily_books', content.books);
+    if (content.ai_news) DB.set('daily_ai_news', content.ai_news);
   }
   box.innerHTML = renderDailyInner(content);
 };
@@ -2906,6 +2931,8 @@ function avatarUpload() {
 function avatarReset() { DB.set('v2_avatar', ''); refreshAvatars(); toast('已恢复默认头像'); }
 
 function loadHotData() {
+  // 若每日真实热点已就位，不再用静态文件覆盖
+  if (DB.get('v2_sm_hot_real') === '1') return;
   try {
     fetch('./data/douyin_hot.json', { cache: 'no-store' })
       .then(r => r.ok ? r.json() : null)

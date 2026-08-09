@@ -1,5 +1,7 @@
 # 本地每日更新脚本：含用户私有凭据调用，绝不进公开仓库
 daily_update.py
+daily_update.ps1
+setup_task.ps1
 
 # 临时文件
 _deploy_*.py
