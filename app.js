@@ -950,6 +950,9 @@ function render() {
   }
   bindEvents();
   if (window.afterRender) window.afterRender(currentRoute);
+  if (currentRoute === 'home' && typeof window.loadDailyHome === 'function') {
+    setTimeout(window.loadDailyHome, 60);
+  }
 }
 
 // ===== 首页渲染 =====
@@ -1090,8 +1093,88 @@ function renderHome() {
       </div>
       <div id="weatherForecast" class="weather-forecast"></div>
     </div>
+
+    <!-- 今日 AI 精选（每日自动更新） -->
+    <div class="card" id="dailyCard">
+      <div class="card-title-row">
+        <span class="card-title">🌟 今日 AI 精选 <span class="v2-live-badge" id="dailyBadge">加载中…</span></span>
+        <span class="hk-deco">${HK.heart(18)}</span>
+      </div>
+      <div id="dailyContent"><span style="color:var(--text-light)">正在生成今日精选…</span></div>
+    </div>
   </div>`;
 }
+
+// 每日自动更新（每日精选）种子数据：未配置同步 / 无网络时回退展示
+const DAILY_SEED = {
+  plan: '今天建议：① 雅思听力精听 1 篇 + 单词翻卡 30 个；② 完成学校课程 1 项作业；③ 晚间复盘 10 分钟。',
+  hot: [
+    { title: '示例：AI 绘画工具又更新了', url: 'https://www.douyin.com/' },
+    { title: '示例：大学生副业避坑指南', url: 'https://www.douyin.com/' },
+    { title: '示例：本周热议的理财话题', url: 'https://www.douyin.com/' }
+  ],
+  podcasts: [
+    { title: '示例：商业就是这样', note: '用接地气的方式讲商业逻辑' },
+    { title: '示例：得意忘形', note: '关于成长与自我认知的谈话' }
+  ],
+  books: [
+    { title: '示例：《被讨厌的勇气》', author: '岸见一郎', note: '阿德勒心理学入门' },
+    { title: '示例：《纳瓦尔宝典》', author: '埃里克·乔根森', note: '财富与幸福的方法论' },
+    { title: '示例：《认知觉醒》', author: '周岭', note: '自我改变底层逻辑' },
+    { title: '示例：《搞定》', author: '戴维·艾伦', note: '时间管理 GTD' }
+  ],
+  ai_videos: [
+    { title: '示例：10 分钟搞懂 Transformer', url: 'https://www.bilibili.com/' },
+    { title: '示例：雅思口语 7 分模板', url: 'https://www.bilibili.com/' }
+  ]
+};
+
+function renderDailyInner(c) {
+  let h = '';
+  if (c.plan) {
+    h += `<div class="daily-block"><div class="daily-h">📌 今日 AI 计划</div><div class="daily-plan">${esc(c.plan)}</div></div>`;
+  }
+  if (c.hot && c.hot.length) {
+    h += `<div class="daily-block"><div class="daily-h">🔥 实时热点</div>` +
+      c.hot.map(x => `<a class="daily-link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">${esc(x.title)}</a>`).join('') + `</div>`;
+  }
+  if (c.podcasts && c.podcasts.length) {
+    h += `<div class="daily-block"><div class="daily-h">🎧 播客推荐</div>` +
+      c.podcasts.map(x => `<div class="daily-item"><b>${esc(x.title)}</b>${x.note ? `<span>${esc(x.note)}</span>` : ''}</div>`).join('') + `</div>`;
+  }
+  if (c.books && c.books.length) {
+    h += `<div class="daily-block"><div class="daily-h">📚 读书推荐</div>` +
+      c.books.map(x => `<div class="daily-item"><b>${esc(x.title)}</b>${x.author ? ` · ${esc(x.author)}` : ''}${x.note ? `<span>${esc(x.note)}</span>` : ''}</div>`).join('') + `</div>`;
+  }
+  if (c.ai_videos && c.ai_videos.length) {
+    h += `<div class="daily-block"><div class="daily-h">🤖 AI 学习视频</div>` +
+      c.ai_videos.map(x => `<a class="daily-link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">${esc(x.title)}</a>`).join('') + `</div>`;
+  }
+  return h;
+}
+
+// 首页「今日 AI 精选」加载：从 Supabase daily_content 读当天内容，回退种子
+window.loadDailyHome = async function () {
+  const box = document.getElementById('dailyContent');
+  const badge = document.getElementById('dailyBadge');
+  if (!box) return;
+  const today = todayStr();
+  let content = null;
+  try {
+    if (window.SupaBackend) content = await window.SupaBackend.readDaily(today);
+  } catch (e) { content = null; }
+
+  if (!content) {
+    content = DAILY_SEED;
+    if (badge) badge.textContent = '样例';
+    if (badge) badge.style.background = 'rgba(255,255,255,.6)';
+  } else {
+    if (badge) badge.textContent = '实时 · ' + (content.generated_at ? content.generated_at.slice(0, 10) : '');
+    if (badge) badge.style.background = 'var(--accent)';
+    if (badge) badge.style.color = '#fff';
+  }
+  box.innerHTML = renderDailyInner(content);
+};
 
 // 日历渲染
 function renderCalendar(checkins) {
