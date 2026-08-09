@@ -532,6 +532,17 @@
 .tl-leg i{ width:11px; height:11px; border-radius:3px; display:inline-block; flex:0 0 auto; }
 .tl-leg b{ color:var(--hk-red); }
 .tl-idea-input{ display:flex; gap:8px; margin-bottom:10px; }
+
+/* ===== 今日 AI 精选（每日自动更新） ===== */
+#dailyContent .daily-block{ margin-bottom:12px; }
+#dailyContent .daily-block:last-child{ margin-bottom:0; }
+.daily-h{ font-weight:700; font-size:13px; color:var(--hk-red); margin-bottom:6px; }
+.daily-plan{ font-size:13.5px; line-height:1.6; color:var(--hk-text); background:var(--hk-pink-bg); border-radius:10px; padding:8px 10px; }
+.daily-link{ display:block; font-size:13px; color:var(--hk-text); text-decoration:none; padding:5px 8px; border-radius:8px; transition:background .15s; }
+.daily-link:hover{ background:var(--hk-pink-bg); text-decoration:underline; }
+.daily-item{ font-size:13px; color:var(--hk-text); padding:5px 8px; border-radius:8px; }
+.daily-item b{ font-weight:700; }
+.daily-item span{ display:block; font-size:12px; color:var(--text-light); margin-top:2px; }
 .tl-idea-input .v2-input{ flex:1; }
 
 /* ===== 移动端 ===== */
