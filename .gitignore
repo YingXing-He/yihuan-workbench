@@ -1,0 +1,8 @@
+# 本地每日更新脚本：含用户私有凭据调用，绝不进公开仓库
+daily_update.py
+
+# 临时文件
+_deploy_*.py
+_chk_*.js
+_chk_*.png
+_gen_*.py
