@@ -1143,8 +1143,10 @@ function renderDailyInner(c) {
       c.hot.map(x => `<a class="daily-link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.heat ? `<span class="daily-sub">${esc(x.heat)}</span>` : ''}`).join('') + `</div>`;
   }
   if (c.bili && c.bili.length) {
+    const tagOrder = { 'AI前沿': 1, '财经': 2, '认知': 3, '人文': 4, '时政': 5, '雅思': 6 };
+    const sortedBili = [...c.bili].sort((a, b) => (tagOrder[a.tag] || 9) - (tagOrder[b.tag] || 9));
     h += `<div class="daily-block"><div class="daily-h">📺 B站推荐（真实视频）</div>` +
-      c.bili.map(x => `<a class="daily-link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.tag ? `<span class="daily-sub">${esc(x.tag)}</span>` : ''}`).join('') + `</div>`;
+      sortedBili.map(x => `<a class="daily-link" href="${esc(x.url || '#')}" target="_blank" rel="noopener">${esc(x.title)}</a>${x.tag ? `<span class="daily-sub">${esc(x.tag)}</span>` : ''}`).join('') + `</div>`;
   }
   if (c.podcasts && c.podcasts.length) {
     h += `<div class="daily-block"><div class="daily-h">🎧 播客推荐</div>` +
