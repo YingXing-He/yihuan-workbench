@@ -1,0 +1,17 @@
+{
+  "name": "易欢工作台",
+  "short_name": "易欢工作台",
+  "description": "Hello Kitty 主题个人工作台 - 打卡·学习·自媒体·副业一站式管理",
+  "id": "/yh-workbench/",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF9FA",
+  "theme_color": "#FFE0E6",
+  "icons": [
+    { "src": "icon.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "favicon-32.png", "sizes": "32x32", "type": "image/png" }
+  ]
+}

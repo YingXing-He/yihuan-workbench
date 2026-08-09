@@ -1,0 +1,32 @@
+{
+  "updated": "2026-08-07",
+  "note": "每日推荐视频池；点击会跳转B站或内嵌播放。部分为真实B站链接，部分为关键词搜索推荐。",
+  "intensive": [
+    { "title": "【精听挖空】辨听能力训练1 租房场景高频答案词", "bvid": "BV1AyCMBqETu", "desc": "填空题拼写基本功 | 雅思听力机经 | 基础词汇积累" },
+    { "title": "【雅思听力 精听合集】剑雅1-19长难句 逐句精听带练", "bvid": "BV1MTZMYWE7f", "desc": "Part3/Part4 长难句逐句精听 | 持续更新" },
+    { "title": "【雅思播客 全100集】用播客对话学习英语", "bvid": "BV1MTZMYWE7f", "desc": "发音、速度、声音完美 | 绝佳雅思学习素材" },
+    { "title": "【听力能力提高】练习3 场景高频答案词填空题词汇拼写", "bvid": "BV1AyCMBqETu", "desc": "雅思听力磨耳朵 | 雅思彭彭老师" },
+    { "title": "雅思听力P1- 填空题真题讲解", "bvid": "BV1MTZMYWE7f", "desc": "WILL老师 | 真题方法+精听" }
+  ],
+  "shadow": [
+    { "title": "【220集精选】影子跟读 英语口语听力学习绝佳资源", "bvid": "BV1nq4y1G7FH", "desc": "220集影子跟读 | 语速语调模仿" },
+    { "title": "【雅思口语】影子跟读带练 9-12月口语最新题库话题", "bvid": "BV15wsczMEXC", "desc": "crowded place 话题 | 改善流利度和发音" },
+    { "title": "【雅思52集全】100篇全方位覆盖生活各种场景", "bvid": "BV1nq4y1G7FH", "desc": "刷完口语无敌 | 词汇量暴涨" },
+    { "title": "【70集雅思口语情景对话】日常练习", "bvid": "BV15wsczMEXC", "desc": "覆盖日常生活、节日、兴趣爱好等场景" },
+    { "title": "油管Keith雅思口语零基础课程 100集全", "bvid": "BV1nq4y1G7FH", "desc": "从初级到高级 | 涵盖语法、发音、话题拓展" }
+  ],
+  "topic": [
+    { "title": "雅思口语 Part1 万能模板与高分示范", "bvid": "BV15wsczMEXC", "desc": "Part1 答题框架+常用表达" },
+    { "title": "雅思口语 P2-困难的决定 9分答案", "bvid": "BV15wsczMEXC", "desc": "高分示范 | 逻辑与用词分析" },
+    { "title": "雅思口语-有用的发明 9分答案", "bvid": "BV15wsczMEXC", "desc": "Technology 话题 | 高分表达" },
+    { "title": "前考官Annelie雅思口语全真模拟", "bvid": "BV15wsczMEXC", "desc": "Part1-3 全流程 | 评分标准解析" },
+    { "title": "雅思口语9分示范现场", "bvid": "BV15wsczMEXC", "desc": "高分考生现场回答 | 流利度逻辑性分析" }
+  ],
+  "kaoyan": [
+    { "title": "考研英语阅读理解满分技巧", "bvid": "BV1nq4y1G7FH", "desc": "阅读定位+长难句拆解" },
+    { "title": "考研英语作文高分模板", "bvid": "BV1MTZMYWE7f", "desc": "大小作文框架 | 替换表达" },
+    { "title": "考研数学高数基础串讲", "bvid": "BV1AyCMBqETu", "desc": "极限、导数、积分核心考点" },
+    { "title": "考研政治马原速成", "bvid": "BV15wsczMEXC", "desc": "唯物辩证法 | 高频考点" },
+    { "title": "考研专业课复习规划", "bvid": "BV1nq4y1G7FH", "desc": "目标院校信息搜集+时间线" }
+  ]
+}

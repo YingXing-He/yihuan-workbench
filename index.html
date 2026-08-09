@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#FFE0E6">
+  <title>易欢工作台</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon.png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="v2.css">
+</head>
+<body>
+  <!-- 移动端遮罩 -->
+  <div id="drawerOverlay" class="drawer-overlay" onclick="toggleDrawer()"></div>
+
+  <!-- 左侧导航栏（桌面固定 / 移动端抽屉） -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <div class="hk-avatar-sm" id="sidebarAvatar"></div>
+      <span class="sidebar-title">易欢工作台</span>
+      <img src="img/hk_face.png" class="brand-kitty" alt="">
+    </div>
+    <nav id="sidebarNav" class="sidebar-nav"></nav>
+    <div class="sidebar-footer">
+      <button class="help-btn" id="globalHelpBtn" title="使用帮助">?</button>
+      <div class="sidebar-kitty" id="sidebarKitty"></div>
+    </div>
+  </aside>
+
+  <!-- 主内容区 -->
+  <main id="mainContent" class="main-content">
+    <!-- 顶部通栏 -->
+    <header id="topBar" class="top-bar">
+      <div class="top-bar-left">
+        <button id="menuToggle" class="menu-toggle" onclick="toggleDrawer()" aria-label="菜单">
+          <span class="hamburger"><span></span><span></span><span></span></span>
+        </button>
+        <div class="hk-avatar-xs" id="topAvatar"></div>
+        <h1 id="pageTitle" class="top-bar-title">易欢工作台</h1>
+      </div>
+      <div class="top-bar-right">
+        <span id="checkinReminder" class="kitty-remind hidden" data-act="goHome" title="今天还没签到哦～ 点我去签到"></span>
+        <button id="syncBtn" class="icon-btn" title="数据同步">☁️</button>
+        <button id="moreBtn" class="icon-btn" title="更多">⋯</button>
+      </div>
+    </header>
+
+    <!-- 页面内容容器 -->
+    <div id="app" class="app-container"></div>
+  </main>
+
+  <!-- 帮助弹窗 -->
+  <div id="helpModal" class="modal hidden">
+    <div class="modal-backdrop" onclick="closeHelp()"></div>
+    <div class="modal-content help-modal-content">
+      <div class="modal-header">
+        <h3 id="helpTitle">帮助说明</h3>
+        <button class="modal-close" onclick="closeHelp()">✕</button>
+      </div>
+      <div id="helpBody" class="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- 通用弹窗容器 -->
+  <div id="genericModal" class="modal hidden">
+    <div class="modal-backdrop" onclick="closeGeneric()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="genericTitle">提示</h3>
+        <button class="modal-close" onclick="closeGeneric()">✕</button>
+      </div>
+      <div id="genericBody" class="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Toast 提示 -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- 浮动 Hello Kitty 装饰（点击回顶） -->
+  <div id="hkFloat" class="hk-float" title="Hello Kitty 抱抱～ 点我回顶部" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-hidden="true"></div>
+
+  <!-- 返回顶部 Kitty -->
+  <button id="backToTop" class="back-to-top hidden" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="回到顶部" aria-label="回到顶部">
+    <img src="img/hk_new_bear_hug.png" alt="Top">
+  </button>
+
+  <script src="hk.js"></script>
+  <script src="lunar.js"></script>
+  <script src="app.js"></script>
+  <script src="v2-core.js"></script>
+  <script src="v2-a.js"></script>
+  <script src="v2-b.js"></script>
+  <script src="v2-c.js"></script>
+  <script src="v2-d.js"></script>
+  <script src="v2-e.js"></script>
+  <script src="v2-f.js"></script>
+  <script src="data/ncbi_seed.js"></script>
+  <script src="v3.js"></script>
+  <script src="sync.js"></script>
+</body>
+</html>

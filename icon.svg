@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Hello Kitty 简化头像 - 红主题 -->
+  <circle cx="50" cy="50" r="48" fill="#FFE0E6" stroke="#E60012" stroke-width="2"/>
+  <!-- 耳朵 -->
+  <ellipse cx="22" cy="22" rx="12" ry="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/>
+  <ellipse cx="78" cy="22" rx="12" ry="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/>
+  <!-- 脸 -->
+  <ellipse cx="50" cy="56" rx="34" ry="32" fill="#FFFFFF" stroke="#000000" stroke-width="1.5"/>
+  <!-- 眼睛 -->
+  <circle cx="38" cy="48" r="3.5" fill="#000000"/>
+  <circle cx="62" cy="48" r="3.5" fill="#000000"/>
+  <!-- 鼻子 -->
+  <ellipse cx="50" cy="56" rx="4" ry="3" fill="#FFD100"/>
+  <!-- 蝴蝶结 -->
+  <path d="M22,38 Q16,30 20,24 Q26,28 28,34 Q24,36 22,38Z" fill="#E60012"/>
+  <path d="M78,38 Q84,30 80,24 Q74,28 72,34 Q76,36 78,38Z" fill="#E60012"/>
+  <circle cx="50" cy="31" r="5" fill="#E60012"/>
+  <!-- 胡须 -->
+  <line x1="28" y1="58" x2="10" y2="55" stroke="#000000" stroke-width="1.2"/>
+  <line x1="28" y1="62" x2="8" y2="63" stroke="#000000" stroke-width="1.2"/>
+  <line x1="72" y1="58" x2="90" y2="55" stroke="#000000" stroke-width="1.2"/>
+  <line x1="72" y1="62" x2="92" y2="63" stroke="#000000" stroke-width="1.2"/>
+</svg>
