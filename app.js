@@ -3025,6 +3025,17 @@ function themeBlocksReset() {
   if (typeof render === 'function') render();
   toast('已恢复主题预设');
 }
+// 分区调色：取色器 <-> 十六进制文本框 双向同步（兼容华为浏览器等不弹取色器的环境）
+function blkColorSync(id, val, fromText) {
+  const colorEl = gid(id), txtEl = gid(id + '_txt');
+  if (!colorEl) return;
+  if (fromText) {
+    val = (val || '').trim().replace(/^#/, '');
+    if (/^[0-9a-fA-F]{6}$/.test(val)) { colorEl.value = '#' + val; }
+  } else if (txtEl) {
+    txtEl.value = val;
+  }
+}
 function avatarUpload() {
   const inp = gid('avatarInput'); if (!inp) return;
   inp.onchange = ev => {
@@ -3068,7 +3079,7 @@ function renderSettings() {
   // 分区精细调色：默认「米白底 + 红框 + 浅红侧栏/顶栏 + 红强调」
   const blkDefault = { page:'#FFFDF7', sidebar:'#FFE8EC', topbar:'#FFE8EC', card:'#FFFFFF', border:'#E60012', accent:'#E60012' };
   const blk = Object.assign({}, blkDefault, DB.get('v2_theme_blocks', null) || {});
-  const blkRow = (id, label, val) => `<label class="blk-item"><span>${label}</span><input type="color" id="${id}" value="${val}"></label>`;
+  const blkRow = (id, label, val) => `<label class="blk-item"><span>${label}</span><span class="blk-color"><input type="color" id="${id}" value="${val}" oninput="blkColorSync('${id}',this.value,false)" style="width:40px;height:34px;min-width:40px;min-height:34px;border:none;background:none;padding:0;cursor:pointer"><input type="text" id="${id}_txt" value="${val}" maxlength="7" class="blk-hex" oninput="blkColorSync('${id}',this.value,true)" placeholder="#RRGGBB"></span></label>`;
 
   return `<div class="page">
     <div class="page-head">
