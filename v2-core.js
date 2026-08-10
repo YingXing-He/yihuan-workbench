@@ -367,9 +367,9 @@
     seed('sport_tasks', [
       { id: gId(), title: '宿舍无器械全身燃脂 15 分钟', cat: '燃脂', video: 'https://www.bilibili.com/video/BV1GJ411x7h7' },
       { id: gId(), title: '新手瑜伽舒缓拉伸 20 分钟', cat: '拉伸', video: 'https://www.bilibili.com/video/BV1xx411c7mD' },
-      { id: gId(), title: '腹肌核心训练 10 分钟', cat: '力量', video: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('腹肌核心训练 10分钟') },
-      { id: gId(), title: '跳绳有氧跟练 30 分钟', cat: '有氧', video: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('跳绳 有氧 跟练') },
-      { id: gId(), title: '睡前助眠拉伸 12 分钟', cat: '放松', video: 'https://search.bilibili.com/all?keyword=' + encodeURIComponent('睡前 拉伸 助眠') }
+      { id: gId(), title: '腹肌核心训练 10 分钟', cat: '力量', video: 'https://www.bilibili.com/video/BV1vK4y1G7b7' },
+      { id: gId(), title: '跳绳有氧跟练 30 分钟', cat: '有氧', video: 'https://www.bilibili.com/video/BV1S54y1G7Ch' },
+      { id: gId(), title: '睡前助眠拉伸 12 分钟', cat: '放松', video: 'https://www.bilibili.com/video/BV1Ki4y1P7vJ' }
     ]);
     seed('skincare', []);
     seed('review', []);
@@ -395,6 +395,55 @@
     ]);
     seed('sm_hot_time', '2026-08-07');
     seed('sm_hot_source', '实时热点快照（联网抓取）');
+  }
+
+  /* ===================== 今日运势 ===================== */
+  function renderFortune() {
+    const dstr = (typeof todayStr === 'function') ? todayStr() : new Date().toISOString().slice(0, 10);
+    const n = parseInt(dstr.replace(/-/g, ''), 10) || 20260810;
+    const pick = (arr, off) => arr[((n >> 0) + off) % arr.length];
+    const stars = ((n % 5) + 1); // 1-5 星
+    const colors = ['蜜桃粉', '薄荷绿', '晴空蓝', '暖阳橙', '薰衣草紫', '奶油白', '豆沙红', '鹅黄'];
+    const nums = ['3', '7', '8', '12', '15', '21', '28', '36'];
+    const yi = ['学习新知', '主动表达', '整理环境', '早睡早起', '记录灵感', '联系老友', '尝试新事物', '复盘总结', '运动出汗', '给自己奖励'];
+    const ji = ['冲动消费', '过度熬夜', '钻牛角尖', '拖延要事', '与人争执', '暴饮暴食', '自我否定', '临时抱佛脚'];
+    const lines = [
+      '今天的你像清晨的露水，干净又有无限可能，去把小目标一个个点亮。',
+      '把大目标拆成小步骤，今天就能轻松迈出第一步，别想太多先动起来。',
+      '自信一点，你比自己以为的更靠谱，今天适合主动表达想法。',
+      '状态平稳的一天，把待办里最难的那个先解决，后面的都顺了。',
+      '灵感容易在放松时出现，散步或听歌时记得随手记下来。',
+      '对自己温柔些，完成比完美重要，今天的你已经很努力了。',
+      '适合沉淀的一天，读读书、整理笔记，给大脑充充电。',
+      '社交运不错，遇到的人可能带来意外的小机会，多笑笑。'
+    ];
+    const color = pick(colors, 0), num = pick(nums, 3), y = pick(yi, 1), j = pick(ji, 2), line = pick(lines, 4);
+    let starHtml = '';
+    for (let i = 0; i < 5; i++) starHtml += (i < stars ? '★' : '☆');
+    const L = [
+      { t: '综合运势', v: starHtml, c: 'var(--hk-pink)', fs: '22px' },
+      { t: '幸运色', v: color, c: 'var(--hk-blue)', fs: '18px' },
+      { t: '幸运数字', v: num, c: 'var(--hk-green)', fs: '20px' },
+      { t: '今日宜', v: y, c: 'var(--hk-orange)', fs: '16px' },
+      { t: '今日忌', v: j, c: 'var(--red)', fs: '16px' }
+    ];
+    let h = `<div class="page">
+      <div class="page-head"><div class="page-title">今日运势</div>
+        <div class="page-sub">${esc(dstr)} · 每天自动更新，仅供娱乐 🔮</div></div>
+      <div class="v2-section"><div class="v2-section-title">🔮 易欢的今日签</div>
+        <div class="overview-grid">`;
+    L.forEach(x => h += `<div class="overview-card"><div class="overview-value" style="color:${x.c};font-size:${x.fs}">${esc(x.v)}</div><div class="overview-label">${esc(x.t)}</div></div>`);
+    h += `</div></div>
+      <div class="v2-section"><div class="v2-section-title">💌 今日寄语</div>
+        <div style="background:var(--page-bg);border-radius:12px;padding:16px;line-height:1.9;font-size:14px;color:var(--text-primary)">${esc(line)}</div></div>
+      <div class="v2-section"><div class="v2-section-title">📋 今日宜忌</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <span style="display:inline-block;padding:6px 14px;border-radius:20px;background:rgba(34,197,94,.12);color:#16a34a;font-weight:600">宜 · ${esc(y)}</span>
+          <span style="display:inline-block;padding:6px 14px;border-radius:20px;background:rgba(239,68,68,.12);color:#ef4444;font-weight:600">忌 · ${esc(j)}</span>
+        </div>
+        <div class="settings-desc" style="margin-top:10px">运势根据日期在本地生成，无需联网；换一天就会换一签 ✨</div>
+      </div></div>`;
+    return h;
   }
 
   /* ---------- 渲染 / 动作分发 ---------- */
@@ -467,6 +516,7 @@
 
   // 暴露公共工具给各模块文件（openForm/closeGeneric 也挂到 window 上，方便 v2-*.js 内裸调用）
   window.openForm = openForm;
+  window.V2VIEWS.fortune = renderFortune; // 今日运势（本地按日期生成，无需联网）
   window.V2 = {
     v2, v2set, gId, tStr, money, fmtDate, lastNDates,
     cssBar, cssPie, openForm, ensureDailyTask, toggleV2Task, taskDone, taskDoneRaw,

@@ -454,7 +454,9 @@
   function renderBeautyVideoCard(v, rid, platforms) {
     const plats = (platforms && platforms.length) ? platforms : ['xhs', 'bili'];
     const platLabel = { xhs: '小红书', douyin: '抖音', bili: 'B站' };
-    const links = plats.map(p => V.mediaLink(p, v.kw, platLabel[p] || p)).join('');
+    // 小红书搜索对多词/空格关键词容易"未找到相关内容"，改用首个短语作短关键词；B站/抖音保留完整词
+    const shortKw = (v.kw || v.t || '').split(/\s+/)[0];
+    const links = plats.map(p => V.mediaLink(p, p === 'xhs' ? shortKw : (v.kw || v.t || ''), platLabel[p] || p)).join('');
     return `<div class="v2-video-card v2-beauty-card">
       <div class="v2-video-thumb">▶</div>
       <div class="v2-video-info">

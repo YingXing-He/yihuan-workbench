@@ -4191,7 +4191,9 @@ function videoHTML(url) {
       const embed = `https://player.bilibili.com/player.html?bvid=${m[0]}&high_quality=1&autoplay=0&danmaku=0`;
       return `<div class="video-embed"><iframe src="${embed}" allowfullscreen="true" loading="lazy" referrerpolicy="no-referrer" allow="autoplay; encrypted-media; picture-in-picture; fullscreen; accelerometer; gyroscope" sandbox="allow-scripts allow-same-origin allow-popups allow-presentation"></iframe></div>`;
     }
-    return `<div class="video-fallback"><span style="font-size:34px">📺</span><span>B站链接需包含 BV 号</span><a href="${url}" target="_blank" rel="noreferrer" style="color:var(--red);font-weight:600">跳转 B站 →</a></div>`;
+    // 无 BV 号的 B站搜索/聚合链接：提示并给出搜索按钮，不再显示"需包含 BV 号"
+    const searchQ = url.includes('keyword=') ? decodeURIComponent((url.split('keyword=')[1] || '').split('&')[0]) : 'B站';
+    return `<div class="video-fallback"><span style="font-size:34px">📺</span><span>该链接是 B站搜索结果页，无法直接内嵌</span><a href="${url}" target="_blank" rel="noreferrer" style="color:var(--red);font-weight:600">去 B站搜索「${esc(searchQ)}」→</a></div>`;
   }
   if (url.includes('youtube.com') || url.includes('youtu.be')) {
     const y = url.match(/[?&]v=([\w-]+)/) || url.match(/youtu\.be\/([\w-]+)/);
@@ -4451,7 +4453,11 @@ async function testAiConnection() {
     const txt = await window.AI.call([{ role: 'user', content: '只回复 ok 两个字' }], { temp: 0 });
     toast('✅ 连接成功：' + txt.slice(0, 24));
   } catch (e) {
-    toast('❌ 连接失败：' + e.message + '（可能 CORS 拦截，见卡片提示加代理）');
+    let msg = (e && e.message) ? e.message : String(e);
+    if (/Failed to fetch|NetworkError|Network request failed/i.test(msg)) {
+      msg = '浏览器直连被跨域(CORS)/网络拦截。可在 Base URL 前加 CORS 代理（如 https://api.allorigins.win/raw?url= 后接真实地址），或改用支持跨域的官方端点（如 DeepSeek https://api.deepseek.com/v1，模型 deepseek-chat）';
+    }
+    toast('❌ 连接失败：' + msg);
   }
 }
 
