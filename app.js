@@ -3147,7 +3147,7 @@ function renderSettings() {
         </div>
         <div id="customThemeBox" style="${DB.get('v2_theme','hk-red')==='custom'?'':'display:none'};align-items:center;gap:12px;margin-bottom:6px">
           <label class="settings-label">主色</label>
-          <input type="color" id="customColor" value="${esc(DB.get('v2_theme_custom','#E60012'))}" style="width:46px;height:32px;border:none;background:none;cursor:pointer">
+          <input type="color" id="customColor" value="${esc(DB.get('v2_theme_custom','#E60012'))}" oninput="themeCustomApply()" style="width:56px;height:40px;border:none;background:none;cursor:pointer;padding:0" title="点击选择主题色">
           <button class="btn btn-primary btn-xs" data-act="themeCustomApply">应用自定义</button>
         </div>
         <div class="card" style="margin-top:14px">
@@ -3447,7 +3447,7 @@ function bindEvents() {
   window.__wbClickBound = true;
 
   // 导航点击
-  document.addEventListener('click', e => {
+  function handleDocClick(e) {
     const nav = e.target.closest('[data-nav]');
     if (nav) {
       const key = nav.dataset.nav;
@@ -3475,7 +3475,21 @@ function bindEvents() {
     if (!actEl) return;
     const act = actEl.dataset.act;
     handleAction(act, actEl, e);
-  });
+  }
+  document.addEventListener('click', handleDocClick);
+
+  // 平板/触屏兼容：部分设备 click 事件延迟或被吞掉，用 touchend 兜底
+  document.addEventListener('touchend', e => {
+    const tag = e.target.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    const actEl = e.target.closest('[data-act]');
+    const nav = e.target.closest('[data-nav]');
+    const helpBtn = e.target.closest('[data-help]');
+    if (actEl || nav || helpBtn || e.target.closest('#globalHelpBtn')) {
+      e.preventDefault();
+      handleDocClick(e);
+    }
+  }, { passive: false });
 }
 
 function handleAction(act, el, e) {
