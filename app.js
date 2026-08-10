@@ -1155,18 +1155,29 @@ window.openMedia = function (platform, keyword) {
   if (typeof window.tryOpenApp === 'function') window.tryOpenApp(scheme, web);
   else window.open(web, '_blank');
 };
-// 老接口保留（仅喜马拉雅单集复用）
+// 尝试用 App scheme 唤起本地应用，移动端最可靠的方式是直接 location.href 跳 scheme，
+// 250ms 内未被接管（页面仍然可见）则回退到网页。桌面端直接用 hidden <a> 点击尝试唤起。
 window.tryOpenApp = function (scheme, fallbackUrl) {
-  var iframe = document.createElement('iframe');
-  iframe.style.cssText = 'width:0;height:0;border:0;position:absolute;top:-9999px;left:-9999px;';
-  iframe.src = scheme;
-  document.body.appendChild(iframe);
-  var t0 = Date.now();
-  function cleanup() { if (iframe && iframe.parentNode) iframe.parentNode.removeChild(iframe); }
+  if (!scheme) { window.open(fallbackUrl, '_blank'); return; }
+  var timeout = setTimeout(function () { window.location.href = fallbackUrl; }, 1200);
+  // 用隐藏 <a> 触发 scheme（桌面/部分移动浏览器对 a.click() 唤起 scheme 支持更好）
+  var a = document.createElement('a');
+  a.href = scheme;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  try { a.click(); } catch (e) {}
+  // 若 300ms 后页面仍可见（说明 App 未接管），补一次 location.href 强唤起
   setTimeout(function () {
-    cleanup();
-    if (Date.now() - t0 < 900) window.open(fallbackUrl, '_blank');
-  }, 500);
+    try {
+      if (!document.hidden) window.location.href = scheme;
+    } catch (e) {}
+    // 再等 900ms，仍可见则取消回退计时并清掉（保留在当前页）
+    setTimeout(function () {
+      clearTimeout(timeout);
+      if (document.hidden) { /* App 已接管，无需处理 */ }
+      else { /* 未唤起：已被上面的 fallbackUrl 接管或仍留在本页，无需额外动作 */ }
+    }, 900);
+  }, 300);
 };
 
 function dailyTagClass(tag) {

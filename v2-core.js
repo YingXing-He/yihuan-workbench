@@ -470,7 +470,7 @@
   window.V2 = {
     v2, v2set, gId, tStr, money, fmtDate, lastNDates,
     cssBar, cssPie, openForm, ensureDailyTask, toggleV2Task, taskDone, taskDoneRaw,
-    readIs, readToggle, readPick, readBtn, dailyPick, dayIndexLocal, vidUrl,
+    readIs, readToggle, readPick, readBtn, dailyPick, dayIndexLocal, vidUrl, mediaLink,
     ICONS, V2_ROUTES, V2_TITLES, esc, gid, toast
   };
 

@@ -168,7 +168,7 @@
         <div class="v2-form-actions"><button class="btn btn-primary" data-act="tlSaveEvent">保存</button><button class="btn" onclick="closeGeneric()">取消</button></div>
       </div>`);
   }
-  function saveEvent() {
+  function tlSaveEvent() {
     const title = gid('f_title').value.trim();
     if (!title) { toast('请填写活动'); return; }
     const start = gid('f_start').value;
@@ -243,8 +243,8 @@
   window.V2ACT = window.V2ACT || {};
   window.V2VIEWS.timeline = renderTimeline;
   Object.assign(window.V2ACT, {
-    tlAddEvent, tlEditEvent, tlSaveEvent, tlDelEvent,
-    tlPrevDay, tlNextDay, tlToday, tlDelIdea,
+    tlAddEvent, tlEditEvent, tlDelEvent,
+    tlPrevDay, tlNextDay, tlToday, tlDelIdea, tlSaveEvent,
     tlAddIdea: () => window.TL.addIdea()
   });
 
