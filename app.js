@@ -1098,6 +1098,7 @@ function renderHome() {
     <div class="card" id="dailyCard">
       <div class="card-title-row">
         <span class="card-title">🌟 今日 AI 精选 <span class="v2-live-badge" id="dailyBadge">加载中…</span></span>
+        <button class="btn btn-outline btn-sm" data-act="genDailyAI" title="用 AI 即时生成今日精选">⚡ 生成</button>
         <span class="hk-deco">${HK.heart(18)}</span>
       </div>
       <div id="dailyContent"><span style="color:var(--text-light)">正在生成今日精选…</span></div>
@@ -1185,8 +1186,11 @@ function dailyTagClass(tag) {
   return map[tag] || '';
 }
 
-function renderDailyInner(c) {
+function renderDailyInner(c, isSample) {
   let h = '';
+  if (isSample) {
+    h += `<div class="daily-sample-note">⚠️ 当前为示例数据（AI 后端未生成）。点右上角「⚡生成」即可获取真实 AI 精选。</div>`;
+  }
   if (c.plan) {
     h += `<div class="daily-block"><div class="daily-h">📌 今日 AI 计划</div><div class="daily-plan">${esc(c.plan)}</div></div>`;
   }
@@ -1245,6 +1249,8 @@ window.loadDailyHome = async function () {
   if (!content) {
     content = DAILY_SEED;
     if (badge) { badge.textContent = '样例'; badge.style.background = 'rgba(255,255,255,.6)'; badge.style.color = ''; }
+    box.innerHTML = renderDailyInner(content, true);
+    return;
   } else {
     if (badge) { badge.textContent = '实时 · ' + (content.generated_at ? content.generated_at.slice(0, 10) : today); badge.style.background = 'var(--accent)'; badge.style.color = '#fff'; }
     // 把真实数据缓存到 localStorage，供「自媒体/B站/播客/读书」等模块读取
@@ -1265,8 +1271,57 @@ window.loadDailyHome = async function () {
     if (content.books) DB.set('daily_books', content.books);
     if (content.ai_news) DB.set('daily_ai_news', content.ai_news);
   }
-  box.innerHTML = renderDailyInner(content);
+  box.innerHTML = renderDailyInner(content, false);
 };
+
+// 即时生成「今日 AI 精选」：调用服务端 AI 代理（Supabase Edge Function），
+// 真·调 DeepSeek 生成当日计划/热点/前沿，不再回退示例。未部署后端时给出明确提示。
+window.genDailyAI = async function () {
+  const box = document.getElementById('dailyContent');
+  const badge = document.getElementById('dailyBadge');
+  if (box) box.innerHTML = '<span style="color:var(--text-light)">⏳ 正在用 AI 生成今日精选…</span>';
+  if (badge) { badge.textContent = '生成中…'; badge.style.background = 'rgba(255,255,255,.6)'; badge.style.color = ''; }
+  try {
+    if (!window.SupaBackend || !window.SupaBackend.ai) throw new Error('未接入 AI 后端（需在 Supabase 部署 ai-proxy 函数）');
+    const prompt = `你是「易欢工作台」的每日精选生成器。用户易欢：大二水产养殖专业学生，副业做自媒体/闲鱼/雅思，关注 AI、理财、自我提升。请只输出一个 JSON 对象（不要任何 Markdown 代码块、不要多余解释），结构严格如下：
+{
+  "plan": "一句话今日建议（雅思精听/单词 + 学校课程推进 + 晚间复盘）",
+  "ai_news": [{"title":"真实近况的AI/科技新闻标题","url":"真实可访问链接","summary":"一句话解读"}],
+  "hot": [{"title":"适合大学生成长/副业的热点话题","url":"https://www.douyin.com/search/?keyword=话题"}]
+}
+要求：ai_news 给 3 条、hot 给 3 条；url 必须真实可用；内容具体不空洞。`;
+    const text = await window.SupaBackend.ai([{ role: 'user', content: prompt }], { temp: 0.6 });
+    const data = parseAiJson(text);
+    if (!data || (!data.plan && !data.ai_news && !data.hot)) throw new Error('AI 返回内容无法解析，请重试');
+    data.generated_at = new Date().toISOString();
+    const today = todayStr();
+    window.DAILY = data;
+    if (data.hot && data.hot.length) {
+      DB.set('v2_sm_hot', data.hot);
+      DB.set('v2_sm_hot_source', 'AI 即时生成');
+      DB.set('v2_sm_hot_real', '1');
+    }
+    if (data.ai_news) DB.set('daily_ai_news', data.ai_news);
+    box.innerHTML = renderDailyInner(data, false);
+    if (badge) { badge.textContent = '实时 · ' + today; badge.style.background = 'var(--accent)'; badge.style.color = '#fff'; }
+    toast('今日 AI 精选已生成 ✓');
+  } catch (e) {
+    if (box) box.innerHTML = '<div class="daily-sample-note">⚠️ 生成失败：' + esc(e && e.message ? e.message : e) + '。请先在 Supabase 部署 ai-proxy 函数并配置 DEEPSEEK_API_KEY（见「设置 → AI 模型」说明）。</div>';
+    if (badge) { badge.textContent = '未配置'; badge.style.background = 'rgba(255,255,255,.6)'; badge.style.color = ''; }
+  }
+};
+
+// 容忍解析 AI 返回的 JSON（可能带 ```json 代码块或多余文字）
+function parseAiJson(text) {
+  if (!text) return null;
+  let s = String(text).trim();
+  const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) s = fence[1].trim();
+  try { return JSON.parse(s); } catch (e) {}
+  const brace = s.match(/\{[\s\S]*\}/);
+  if (brace) { try { return JSON.parse(brace[0]); } catch (e2) {} }
+  return null;
+}
 
 // 统一每日数据中枢：各板块优先读 Supabase 缓存，失败回退本地种子
 window.Daily = {
@@ -1680,7 +1735,7 @@ window.V2ACT.ieltsPlanDone = (el) => {
 };
 window.V2ACT.ieltsAiPlan = async (el) => {
   const box = gid('ieltsAiBox');
-  // 优先读取后端每日脚本已生成的「AI 优化计划」（DeepSeek 已算好，无需前端再配 key）
+  // 优先读取后端每日脚本已生成的「AI 优化计划」
   const cached = (window.Daily && window.Daily.get('ielts_ai_plan', null));
   if (cached) {
     DB.set('ielts_plan_ai', cached);
@@ -1688,21 +1743,31 @@ window.V2ACT.ieltsAiPlan = async (el) => {
     toast('已加载今日 AI 优化计划 ✓');
     return;
   }
-  // 无缓存：尝试浏览器内调用（需用户在「设置 → AI 模型」配置）
-  if (box) box.innerHTML = '⏳ 正在生成今日 AI 优化计划…';
-  if (!window.AI || !window.AI.call || !window.AI.providers || !window.AI.providers().length) {
-    if (box) box.innerHTML = '⚠️ 今日计划尚未生成（电脑端定时任务未跑）。如需在网页端即时生成，请先到「设置 → AI 模型」配置至少一个模型；或等电脑定时任务跑完。';
-    toast('今日计划未就绪'); return;
-  }
+  if (box) box.innerHTML = '⏳ 正在用 AI 生成今日优化计划…';
   const hw = DB.get('ielts_hw', []) || [];
   const summary = hw.map(h => `${ieltsOrgName(h.orgId)}·${h.title}（${h.type}）：进度 ${h.done || 0}/${h.total || 0}，每周${h.perWeek || 3}次${h.deadline ? ('，截止' + h.deadline) : ''}，连续未推进${h.miss || 0}天`).join('\n');
   const todayPlan = (DB.get('ielts_plan', null) || { items: [] }).items.map(it => `- ${it.label} 推进${it.amount}`).join('\n') || '（无）';
   const prompt = `你是易欢的雅思学习教练。她有两个机构的雅思作业，进度不同。\n当前作业：\n${summary}\n\n已有今日基础计划：\n${todayPlan}\n\n请基于截止日紧迫度、各作业落后程度，重新为她排布今天的雅思学习任务（含每项建议时长/数量），并在结尾用一句狠话督促她（她的目标开迈巴赫）。语气像一个严格但关心她的教练。不超过300字。`;
   try {
-    const text = await window.AI.call([{ role: 'user', content: prompt }]);
-    DB.set('ielts_plan_ai', text);
-    if (box) box.innerHTML = '<div style="white-space:pre-wrap;line-height:1.7">' + esc(text) + '</div>';
-  } catch (e) { if (box) box.innerHTML = '⚠️ AI 调用失败：' + esc(e && e.message ? e.message : e) + '。请检查模型配置与网络。'; }
+    let text = null;
+    // 优先走服务端 AI 代理（密钥存服务端、绕过 CORS）；失败再回退浏览器直连
+    if (window.SupaBackend && window.SupaBackend.ai) {
+      try { text = await window.SupaBackend.ai([{ role: 'user', content: prompt }], { temp: 0.7 }); } catch (e) { text = null; }
+    }
+    if (!text && window.AI && window.AI.call && window.AI.providers && window.AI.providers().length) {
+      text = await window.AI.call([{ role: 'user', content: prompt }], { temp: 0.7 });
+    }
+    if (text) {
+      DB.set('ielts_plan_ai', text);
+      if (box) box.innerHTML = '<div style="white-space:pre-wrap;line-height:1.7">' + esc(text) + '</div>';
+      toast('AI 已生成今日计划 ✓');
+    } else {
+      if (box) box.innerHTML = '⚠️ 尚未接入 AI 后端。请在 Supabase 部署 ai-proxy 函数并配置 DEEPSEEK_API_KEY（见「设置 → AI 模型」说明），或在「设置 → AI 模型」配置支持跨域的模型后重试。';
+      toast('AI 后端未就绪');
+    }
+  } catch (e) {
+    if (box) box.innerHTML = '⚠️ AI 调用失败：' + esc(e && e.message ? e.message : e) + '。请检查 AI 后端配置与网络。';
+  }
 };
 
 // --- 单词自测抽认卡 ---
@@ -3214,7 +3279,7 @@ function renderSettings() {
           ${aiProv.length ? (aiDefaultObj ? '✅ 默认模型：' + esc(aiDefaultObj.name || aiDefaultObj.model) + ' — AI 功能可用' : '⚠ 请设一个默认模型') : '⚠ 未配置 — AI 功能不可用（不影响其他功能）'}
         </p>
         <p style="font-size:11px;color:var(--text-light);margin-top:6px;border-top:1px dashed var(--border-light);padding-top:8px">
-          提示：浏览器直连大模型可能被跨域(CORS)拦截。若「测试连接」失败，可在 Base URL 前加 CORS 代理（如 <code>https://api.allorigins.win/raw?url=</code> 后接真实地址），或等后续私人后端 / 飞书中转。
+          提示：浏览器直连大模型常被跨域(CORS)拦截。最稳的方案是用<b>服务端代理</b>：在 Supabase 部署自带的 <code>ai-proxy</code> 边缘函数（见仓库 <code>supabase/functions/ai-proxy/</code> 与说明，密钥存服务端、自动处理 CORS），部署后「今日 AI 精选」和「AI 优化计划」即可真实生成，无需在此配置模型。也可在 Base URL 前加 CORS 代理（如 <code>https://api.allorigins.win/raw?url=</code> 后接真实地址）临时绕过。
         </p>
       </div>
     </div>
@@ -3489,17 +3554,23 @@ function bindEvents() {
   }
   document.addEventListener('click', handleDocClick);
 
-  // 平板/触屏兼容：部分设备 click 事件延迟或被吞掉，用 touchend 兜底
+  // 触屏兼容：严格区分「点击」与「滑动」，避免滚动侧边栏/雅思板块时松手误触发打开
+  let tsX = 0, tsY = 0, tsT = 0;
+  document.addEventListener('touchstart', e => {
+    const t = e.changedTouches[0]; tsX = t.clientX; tsY = t.clientY; tsT = Date.now();
+  }, { passive: true });
   document.addEventListener('touchend', e => {
+    const t = e.changedTouches[0];
+    const dx = Math.abs(t.clientX - tsX), dy = Math.abs(t.clientY - tsY);
+    const dt = Date.now() - tsT;
+    // 移动超过 12px 或按住超过 600ms → 视为滑动/长按，不触发点击（交给原生滚动）
+    if (dx > 12 || dy > 12 || dt > 600) return;
     const tag = e.target.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-    const actEl = e.target.closest('[data-act]');
-    const nav = e.target.closest('[data-nav]');
-    const helpBtn = e.target.closest('[data-help]');
-    if (actEl || nav || helpBtn || e.target.closest('#globalHelpBtn')) {
-      e.preventDefault();
-      handleDocClick(e);
-    }
+    const hit = e.target.closest('[data-nav],[data-act],[data-help],#globalHelpBtn');
+    if (!hit) return;
+    e.preventDefault();            // 阻止合成 click 双触发
+    handleDocClick(e);
   }, { passive: false });
 }
 
@@ -3508,6 +3579,7 @@ function handleAction(act, el, e) {
     // ---- 首页操作 ----
     case 'doCheckin': doCheckin(); break;
     case 'refreshReport': refreshReport(); break;
+    case 'genDailyAI': if (window.genDailyAI) window.genDailyAI(); break;
     case 'addCountdown': addCountdown(); break;
     case 'editWeather': editWeather(); break;
     case 'refreshWeather': refreshWeatherV3(); break;

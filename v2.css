@@ -534,6 +534,7 @@
 .tl-idea-input{ display:flex; gap:8px; margin-bottom:10px; }
 
 /* ===== 今日 AI 精选（每日自动更新） ===== */
+.daily-sample-note{ font-size:12px; line-height:1.5; color:var(--hk-red); background:var(--hk-pink-bg); border:1px solid var(--hk-red); border-radius:10px; padding:8px 10px; margin-bottom:10px; }
 #dailyContent .daily-block{ margin-bottom:12px; }
 #dailyContent .daily-block:last-child{ margin-bottom:0; }
 .daily-h{ font-weight:700; font-size:13px; color:var(--hk-red); margin-bottom:6px; }

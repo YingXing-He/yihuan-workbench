@@ -104,7 +104,20 @@ window.SupaBackend = (function () {
     }
   }
 
-  return { ensure, reset, signUp, signIn, signOut, getUser, push, pull, readDaily };
+  // 服务端 AI 代理：调用 Supabase Edge Function「ai-proxy」，密钥存于服务端 Secrets，
+  // 前端不暴露 key，且由 Supabase 处理 CORS。这是把工作台从「纯前端」变成「有后端」的关键一环。
+  async function ai(messages, opts) {
+    const sb = ensure();
+    const { data, error } = await sb.functions.invoke('ai-proxy', {
+      body: JSON.stringify({ messages, opts: opts || {} })
+    });
+    if (error) throw new Error(error.message || 'ai-proxy 调用失败');
+    const body = (typeof data === 'string') ? JSON.parse(data) : (data || {});
+    if (body.error) throw new Error(body.error);
+    return body.text || '';
+  }
+
+  return { ensure, reset, signUp, signIn, signOut, getUser, push, pull, readDaily, ai };
 })();
 
 /* =========================================================================
